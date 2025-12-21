@@ -2,9 +2,11 @@
 package com.smarthr.backend.service;
 
 import com.smarthr.backend.domain.Employee;
+import com.smarthr.backend.mapper.EmployeeMapper;
 import com.smarthr.backend.repository.EmployeeRepository;
 import com.smarthr.backend.web.ResourceNotFoundException;
 import com.smarthr.backend.web.dto.EmployeeDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,15 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Servicio de negocio para Employee.
  */
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EmployeeService {
 
     private final EmployeeRepository repository;
-
-    public EmployeeService(EmployeeRepository repository) {
-        this.repository = repository;
-    }
+    private final EmployeeMapper mapper;
 
     public Page<EmployeeDto> list(String name, String role, String location, Pageable pageable) {
         Page<Employee> page = repository
@@ -31,32 +32,37 @@ public class EmployeeService {
                         location == null ? "" : location,
                         pageable
                 );
-        return page.map(this::toDto);
+        return page.map(mapper::toDto);
     }
 
     public EmployeeDto get(Long id) {
         Employee e = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
-        return toDto(e);
+        return mapper.toDto(e);
     }
 
     public EmployeeDto create(EmployeeDto dto) {
-        Employee e = toEntity(dto);
+        Employee e = mapper.toEntity(dto);
         e.setId(null);
         e = repository.save(e);
-        return toDto(e);
+        return mapper.toDto(e);
     }
 
     public EmployeeDto update(Long id, EmployeeDto dto) {
-        Employee e = repository.findById(id)
+        Employee current = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
-        e.setName(dto.getName());
-        e.setRole(dto.getRole());
-        e.setLocation(dto.getLocation());
-        e.setEmail(dto.getEmail());
-        e.setHireDate(dto.getHireDate());
-        e = repository.save(e);
-        return toDto(e);
+
+        // Merge controlado (opcional: crear método @BeanMapping para update)
+        Employee incoming = mapper.toEntity(dto);
+        current.setName(incoming.getName());
+        current.setRole(incoming.getRole());
+        current.setLocation(incoming.getLocation());
+        current.setEmail(incoming.getEmail());
+        current.setHireDate(incoming.getHireDate());
+        current.setDepartment(incoming.getDepartment());
+        current.setJobPosition(incoming.getJobPosition());
+
+        return mapper.toDto(repository.save(current));
     }
 
     public void delete(Long id) {
@@ -64,27 +70,5 @@ public class EmployeeService {
             throw new ResourceNotFoundException("Employee not found: " + id);
         }
         repository.deleteById(id);
-    }
-
-    private EmployeeDto toDto(Employee e) {
-        EmployeeDto dto = new EmployeeDto();
-        dto.setId(e.getId());
-        dto.setName(e.getName());
-        dto.setRole(e.getRole());
-        dto.setLocation(e.getLocation());
-        dto.setEmail(e.getEmail());
-        dto.setHireDate(e.getHireDate());
-        return dto;
-    }
-
-    private Employee toEntity(EmployeeDto dto) {
-        Employee e = new Employee();
-        e.setId(dto.getId());
-        e.setName(dto.getName());
-        e.setRole(dto.getRole());
-        e.setLocation(dto.getLocation());
-        e.setEmail(dto.getEmail());
-        e.setHireDate(dto.getHireDate());
-        return e;
     }
 }

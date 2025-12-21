@@ -10,9 +10,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-/**
- * Entidad Employee para persistencia.
- */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,25 +17,29 @@ import java.time.LocalDate;
 @Table(name = "employees")
 public class Employee {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Size(max = 120)
+    @NotBlank @Size(max = 120)
     private String name;
 
-    @NotBlank
-    @Size(max = 80)
+    @NotBlank @Size(max = 80)
     private String role;
 
     @Size(max = 80)
     private String location;
 
-    @Email
-    @Size(max = 180)
+    @Email @Size(max = 180)
     private String email;
 
     private LocalDate hireDate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "job_position_id")
+    private JobPosition jobPosition;
 }
+

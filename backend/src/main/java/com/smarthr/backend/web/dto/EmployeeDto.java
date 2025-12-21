@@ -1,3 +1,4 @@
+
 package com.smarthr.backend.web.dto;
 
 import jakarta.validation.constraints.Email;
@@ -10,12 +11,14 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 /**
- * DTO para entrada/salida de Employee.
+ * DTO principal de empleado (lectura/escritura).
+ * Incluye claves foráneas de Department y JobPosition, y campos auxiliares para mostrar.
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class EmployeeDto {
+
     private Long id;
 
     @NotBlank
@@ -35,5 +38,16 @@ public class EmployeeDto {
 
     private LocalDate hireDate;
 
-}
+    /** Clave foránea a Department. */
+    private Long departmentId;
 
+    /** Nombre del departamento (campo auxiliar solo lectura). */
+    private String departmentName;
+
+    /** Clave foránea a JobPosition. */
+    private Long jobPositionId;
+
+    /** Título del puesto (campo auxiliar solo lectura). */
+    private String jobPositionTitle;
+
+  }
