@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Servicio de negocio para Employee.
  */
 
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -48,21 +49,16 @@ public class EmployeeService {
         return mapper.toDto(e);
     }
 
+    // ====== Actualización parcial ======
     public EmployeeDto update(Long id, EmployeeDto dto) {
         Employee current = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
 
-        // Merge controlado (opcional: crear método @BeanMapping para update)
-        Employee incoming = mapper.toEntity(dto);
-        current.setName(incoming.getName());
-        current.setRole(incoming.getRole());
-        current.setLocation(incoming.getLocation());
-        current.setEmail(incoming.getEmail());
-        current.setHireDate(incoming.getHireDate());
-        current.setDepartment(incoming.getDepartment());
-        current.setJobPosition(incoming.getJobPosition());
+        // IGNORA nulls (no pisa lo existente)
+        mapper.updateEntityFromDto(dto, current);
 
-        return mapper.toDto(repository.save(current));
+        Employee saved = repository.save(current);
+        return mapper.toDto(saved);
     }
 
     public void delete(Long id) {
@@ -72,3 +68,5 @@ public class EmployeeService {
         repository.deleteById(id);
     }
 }
+
+
