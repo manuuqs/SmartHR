@@ -1,36 +1,85 @@
 package com.smarthr.backend.web;
 
-import org.springframework.context.support.DefaultMessageSourceResolvable;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class ApiExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String,Object>> notFound(ResourceNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", "NotFound", "message", ex.getMessage()));
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public ApiError handleNotFound(ResourceNotFoundException ex, HttpServletRequest req) {
+        return error(HttpStatus.NOT_FOUND, "NotFound", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseBody
+    public ApiError handleConflict(ConflictException ex, HttpServletRequest req) {
+        return error(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), req);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String,Object>> conflict(DataIntegrityViolationException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("error", "Conflict", "message", "Constraint violation"));
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseBody
+    public ApiError handleIntegrity(DataIntegrityViolationException ex, HttpServletRequest req) {
+        return error(HttpStatus.CONFLICT, "ConstraintViolation", "Violación de unicidad/constraint", req);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String,Object>> validation(MethodArgumentNotValidException ex) {
-        var errors = ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(FieldError::getField, DefaultMessageSourceResolvable::getDefaultMessage, (a, b) -> a));
-        return ResponseEntity.badRequest().body(Map.of("error", "ValidationError", "details", errors));
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ApiError handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+        String details = ex.getBindingResult().getFieldErrors().stream()
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+        return error(HttpStatus.BAD_REQUEST, "ValidationError", details, req);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ApiError handleConstraint(ConstraintViolationException ex, HttpServletRequest req) {
+        return error(HttpStatus.BAD_REQUEST, "ValidationError", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ApiError handleIllegalArg(IllegalArgumentException ex, HttpServletRequest req) {
+        return error(HttpStatus.BAD_REQUEST, "InvalidArgument", ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ApiError handleNotReadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+        return error(HttpStatus.BAD_REQUEST, "MalformedJson", "JSON mal formado o valor inválido", req);
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseBody
+    public ApiError handleGeneric(Exception ex, HttpServletRequest req) {
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "InternalError", "Error inesperado", req);
+    }
+
+    private ApiError error(HttpStatus status, String error, String message, HttpServletRequest req) {
+        return ApiError.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status.value())
+                .error(error)
+                .message(message)
+                .path(req.getRequestURI())
+                .build();
     }
 }
