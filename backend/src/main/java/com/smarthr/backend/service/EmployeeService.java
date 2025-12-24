@@ -25,6 +25,7 @@ public class EmployeeService {
     private final EmployeeRepository repository;
     private final EmployeeMapper mapper;
 
+    @Transactional(readOnly = true)
     public Page<EmployeeDto> list(String name, String role, String location, Pageable pageable) {
         Page<Employee> page = repository
                 .findByNameContainingIgnoreCaseAndRoleContainingIgnoreCaseAndLocationContainingIgnoreCase(
@@ -42,6 +43,7 @@ public class EmployeeService {
         return mapper.toDto(e);
     }
 
+    @Transactional
     public EmployeeDto create(EmployeeDto dto) {
         Employee e = mapper.toEntity(dto);
         e.setId(null);
@@ -49,18 +51,30 @@ public class EmployeeService {
         return mapper.toDto(e);
     }
 
-    // ====== Actualización parcial ======
+
+    @Transactional
     public EmployeeDto update(Long id, EmployeeDto dto) {
         Employee current = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
-
-        // IGNORA nulls (no pisa lo existente)
-        mapper.updateEntityFromDto(dto, current);
-
-        Employee saved = repository.save(current);
-        return mapper.toDto(saved);
+        // Reemplazo completo: crea desde DTO y sustituye
+        Employee updated = mapper.toEntity(dto);
+        updated.setId(id);
+        // (Opcional) normaliza relaciones: department/jobPosition por id
+        return mapper.toDto(repository.save(updated));
     }
 
+    @Transactional
+    public EmployeeDto patch(Long id, EmployeeDto dto) {
+        Employee current = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
+        // Parcial: ignora nulos (no pisa campos no enviados)
+        mapper.updateEntityFromDto(dto, current);
+        return mapper.toDto(repository.save(current));
+    }
+
+
+
+    @Transactional
     public void delete(Long id) {
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("Employee not found: " + id);

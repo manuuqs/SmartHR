@@ -1,38 +1,137 @@
+
 package com.smarthr.backend.web.controllers;
 
+import com.smarthr.backend.mapper.AssignmentMapper;
 import com.smarthr.backend.domain.Assignment;
 import com.smarthr.backend.repository.AssignmentRepository;
 import com.smarthr.backend.repository.EmployeeRepository;
 import com.smarthr.backend.repository.ProjectRepository;
+import com.smarthr.backend.web.dto.AssignmentDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.*;
+import io.swagger.v3.oas.annotations.media.*;
+import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.net.URI;
 
+import java.net.URI;
+import java.util.List;
+
+@Tag(name = "Assignments", description = "Asignaciones de empleados a proyectos")
 @RestController
 @RequestMapping("/api/assignments")
+@RequiredArgsConstructor
 public class AssignmentController {
+
     private final AssignmentRepository repo;
     private final EmployeeRepository employeeRepo;
     private final ProjectRepository projectRepo;
+    private final AssignmentMapper mapper;
 
-    public AssignmentController(AssignmentRepository repo, EmployeeRepository employeeRepo, ProjectRepository projectRepo){
-        this.repo = repo; this.employeeRepo = employeeRepo; this.projectRepo = projectRepo;
-    }
-
+    @Operation(summary = "Crea una asignación empleado-proyecto")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Creada",
+                    content = @Content(schema = @Schema(implementation = AssignmentDto.class))),
+            @ApiResponse(responseCode = "400", description = "Validación fallida", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto (unicidad)", content = @Content)
+    })
     @PostMapping
-    public ResponseEntity<Assignment> create(@RequestBody Assignment a){
-        // validar employee y project existen
-        if (a.getEmployee() == null || a.getEmployee().getId() == null) return ResponseEntity.badRequest().build();
-        if (a.getProject() == null || a.getProject().getId() == null) return ResponseEntity.badRequest().build();
+    public ResponseEntity<AssignmentDto> create(
+            @Valid @RequestBody AssignmentDto dto) {
 
-        var emp = employeeRepo.findById(a.getEmployee().getId()).orElse(null);
-        var prj = projectRepo.findById(a.getProject().getId()).orElse(null);
+        if (dto.getEmployeeId() == null || dto.getProjectId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        var emp = employeeRepo.findById(dto.getEmployeeId()).orElse(null);
+        var prj = projectRepo.findById(dto.getProjectId()).orElse(null);
         if (emp == null || prj == null) return ResponseEntity.badRequest().build();
 
-        a.setEmployee(emp); a.setProject(prj);
-        Assignment saved = repo.save(a);
-        return ResponseEntity.created(URI.create("/api/assignments/"+saved.getId())).body(saved);
+        Assignment entity = mapper.toEntity(dto);
+        entity.setEmployee(emp);
+        entity.setProject(prj);
+
+        if (entity.getStartDate() != null && entity.getEndDate() != null
+                && entity.getEndDate().isBefore(entity.getStartDate())) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Assignment saved = repo.save(entity);
+        AssignmentDto out = mapper.toDto(saved);
+        return ResponseEntity.created(URI.create("/api/assignments/" + saved.getId())).body(out);
     }
 
-    // list/get/update/delete similares al patrón
+    @Operation(summary = "Lista todas las asignaciones")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Listado devuelto",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AssignmentDto.class))))
+    })
+    @GetMapping
+    public ResponseEntity<List<AssignmentDto>> list() {
+        var list = repo.findAll().stream().map(mapper::toDto).toList();
+        return ResponseEntity.ok(list);
+    }
+
+    @Operation(summary = "Obtiene una asignación por id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Encontrada",
+                    content = @Content(schema = @Schema(implementation = AssignmentDto.class))),
+            @ApiResponse(responseCode = "404", description = "No encontrada", content = @Content)
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<AssignmentDto> get(
+            @Parameter(description = "ID de la asignación") @PathVariable Long id) {
+        return repo.findById(id)
+                .map(mapper::toDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Actualiza completamente una asignación (PUT)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Actualizada",
+                    content = @Content(schema = @Schema(implementation = AssignmentDto.class))),
+            @ApiResponse(responseCode = "400", description = "Validación fallida", content = @Content),
+            @ApiResponse(responseCode = "404", description = "No encontrada", content = @Content)
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(
+            @Parameter(description = "ID de la asignación") @PathVariable Long id,
+            @Valid @RequestBody AssignmentDto dto) {
+
+        return repo.findById(id).map(existing -> {
+            var emp = employeeRepo.findById(dto.getEmployeeId()).orElse(null);
+            var prj = projectRepo.findById(dto.getProjectId()).orElse(null);
+            if (emp == null || prj == null) return ResponseEntity.badRequest().build();
+
+            Assignment updated = mapper.toEntity(dto);
+            updated.setId(id);
+            updated.setEmployee(emp);
+            updated.setProject(prj);
+
+            if (updated.getStartDate() != null && updated.getEndDate() != null
+                    && updated.getEndDate().isBefore(updated.getStartDate())) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            Assignment saved = repo.save(updated);
+            return ResponseEntity.ok(mapper.toDto(saved));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Elimina una asignación")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Eliminada", content = @Content),
+            @ApiResponse(responseCode = "404", description = "No encontrada", content = @Content)
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @Parameter(description = "ID de la asignación") @PathVariable Long id) {
+        if (!repo.existsById(id)) return ResponseEntity.notFound().build();
+        repo.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

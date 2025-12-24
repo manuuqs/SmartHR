@@ -14,7 +14,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "assignments")
+@Table(name = "assignments",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"employee_id","project_id","role_on_project"}))
 public class Assignment {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,9 +29,11 @@ public class Assignment {
     @JoinColumn(name = "project_id")
     private Project project;
 
+    @Column(name = "role_on_project", length = 100, nullable = false)
     @NotBlank @Size(max = 100)
     private String roleOnProject;
 
+    @Column(nullable = false)
     private LocalDate startDate;
 
     private LocalDate endDate;

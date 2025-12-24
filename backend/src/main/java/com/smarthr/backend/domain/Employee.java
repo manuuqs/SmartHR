@@ -29,6 +29,7 @@ public class Employee {
     @Size(max = 80)
     private String location;
 
+    @Column(unique = true)
     @Email @Size(max = 180)
     private String email;
 
