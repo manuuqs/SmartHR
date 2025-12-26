@@ -1,4 +1,8 @@
+
+version: "3.9"
+
 services:
+  # --- Base de datos: PostgreSQL con PGVector ---
   db:
     image: ankane/pgvector:latest
     container_name: smarthr_db
@@ -18,6 +22,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # --- Backend Spring Boot ---
   backend:
     build:
       context: ./backend
@@ -28,11 +33,55 @@ services:
       SPRING_DATASOURCE_USERNAME: tfg_user
       SPRING_DATASOURCE_PASSWORD: tfg_pass
       SPRING_PROFILES_ACTIVE: dev
+      # Opcional si usas Flyway/Liquibase o JPA/Hibernate:
+      # SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "8080:8080"
+    networks:
+      - smarthr_net
+
+  # --- IA Assistant (Spring Boot + Spring AI + RAG) ---
+  ia-assistant:
+    build:
+      context: ./assistant
+      dockerfile: Dockerfile
+    container_name: smarthr_assistant
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/tfg_db
+      SPRING_DATASOURCE_USERNAME: tfg_user
+      SPRING_DATASOURCE_PASSWORD: tfg_pass
+      SPRING_PROFILES_ACTIVE: dev
+      # Proveedor LLM (ajusta según tu caso)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-change_me}
+      # Si usas Ollama local, añadiremos ese servicio en Sprint 4.
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "9090:9090"
+    networks:
+      - smarthr_net
+
+  # --- Frontend (React + Vite) PRODUCCIÓN por Nginx ---
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+      VITE_ASSISTANT_BASE_URL: http://localhost:9090
+    depends_on:
+      backend:
+        condition: service_started
+      ia-assistant:
+        condition: service_started
+
     networks:
       - smarthr_net
 
