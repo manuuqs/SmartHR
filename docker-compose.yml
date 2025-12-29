@@ -16,10 +16,27 @@ services:
     networks:
       - smarthr_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tfg_user -d tfg_db"]
+      test: [ "CMD-SHELL", "pg_isready -U tfg_user -d tfg_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: smarthr_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@smarthr.dev   # <-- cambia aquí
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - smarthr_net
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
 
   # --- Backend Spring Boot ---
   backend:
@@ -27,13 +44,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: smarthr_backend
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/tfg_db
-      SPRING_DATASOURCE_USERNAME: tfg_user
-      SPRING_DATASOURCE_PASSWORD: tfg_pass
-      SPRING_PROFILES_ACTIVE: dev
-      # Opcional si usas Flyway/Liquibase o JPA/Hibernate:
-      # SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
     depends_on:
       db:
         condition: service_healthy
@@ -89,3 +99,5 @@ networks:
 
 volumes:
   db_data:
+  pgadmin_data:
+
