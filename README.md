@@ -6,7 +6,7 @@ Este repositorio contiene la arquitectura base del proyecto: backend (Spring Boo
 ## Estructura
 ```
 backend/
-ia-assistant/
+assistant/
 frontend/
 docs/
 docker-compose.yml
@@ -22,7 +22,7 @@ docker-compose.yml
 1. Construir backend y IA Assistant:
    ```bash
    mvn -q -f backend/pom.xml package
-   mvn -q -f ia-assistant/pom.xml package
+   mvn -q -f assistant/pom.xml package
    ```
 2. Construir frontend:
    ```bash

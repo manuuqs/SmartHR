@@ -10,15 +10,15 @@ import org.mapstruct.*;
 public interface PerformanceReviewMapper {
 
     @Mappings({
-            @Mapping(source = "employee.id",    target = "employeeId"),
-            @Mapping(source = "employee.name",  target = "employeeName"),
-            @Mapping(source = "rating",         target = "rating", qualifiedByName = "enumToStringRating")
+            @Mapping(source = "employee.id",   target = "employeeId"),
+            @Mapping(source = "employee.name", target = "employeeName"),
+            @Mapping(source = "rating",        target = "rating", qualifiedByName = "enumToStringRating")
     })
     PerformanceReviewDto toDto(PerformanceReview entity);
 
     @Mappings({
-            @Mapping(source = "employeeId",     target = "employee", qualifiedByName = "refEmployee"),
-            @Mapping(source = "rating",         target = "rating",   qualifiedByName = "stringToEnumRating")
+            @Mapping(source = "employeeId", target = "employee", qualifiedByName = "refEmployee"),
+            @Mapping(source = "rating",     target = "rating",   qualifiedByName = "stringToEnumRating")
     })
     PerformanceReview toEntity(PerformanceReviewDto dto);
 
@@ -40,3 +40,4 @@ public interface PerformanceReviewMapper {
         return rating == null ? null : rating.name();
     }
 }
+
