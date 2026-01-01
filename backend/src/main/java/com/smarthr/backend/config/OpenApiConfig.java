@@ -16,7 +16,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("SmartHR API")
-                        .description("CRUD de Employees para TFG")
+                        .description("API para gestión de personal con microservicios y asistente IA")
                         .version("v1"));
     }
 }

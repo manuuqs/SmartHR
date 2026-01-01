@@ -20,6 +20,7 @@ import java.util.List;
 @RequestMapping("/api/job-positions")
 public class JobPositionController {
 
+
     private final JobPositionRepository repo;
 
     public JobPositionController(JobPositionRepository repo){ this.repo = repo; }

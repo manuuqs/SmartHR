@@ -18,6 +18,7 @@ import java.util.List;
 @RequestMapping("/api/skills")
 @RequiredArgsConstructor
 public class SkillController {
+
     private final SkillRepository repo;
 
     @Operation(summary = "Lista skills")

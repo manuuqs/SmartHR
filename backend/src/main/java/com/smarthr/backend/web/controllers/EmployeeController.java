@@ -2,13 +2,17 @@
 package com.smarthr.backend.web.controllers;
 
 import com.smarthr.backend.service.EmployeeService;
-import com.smarthr.backend.web.dto.EmployeeDto;
+import com.smarthr.backend.web.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.responses.*;
-import io.swagger.v3.oas.annotations.media.*;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -16,25 +20,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
+
 
 @Tag(name = "Employees", description = "CRUD de empleados con filtros y paginación")
 @RestController
 @RequestMapping("/api/employees")
+@RequiredArgsConstructor
 public class EmployeeController {
 
     private final EmployeeService service;
-
-    public EmployeeController(EmployeeService service) {
-        this.service = service;
-    }
 
     @Operation(
             summary = "Lista empleados",
             description = "Filtra por nombre, rol y ubicación. Resultados paginados."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Listado devuelto", content = @Content(mediaType = "application/json",
-                    array = @ArraySchema(schema = @Schema(implementation = EmployeeDto.class)))),
+            @ApiResponse(responseCode = "200", description = "Listado devuelto",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = EmployeeDto.class))))
     })
     @GetMapping
     public ResponseEntity<Page<EmployeeDto>> list(
@@ -53,8 +57,7 @@ public class EmployeeController {
             @ApiResponse(responseCode = "404", description = "No encontrado", content = @Content)
     })
     @GetMapping("/{id}")
-    public ResponseEntity<EmployeeDto> get(
-            @Parameter(description = "Identificador del empleado") @PathVariable Long id) {
+    public ResponseEntity<EmployeeDto> get(@Parameter(description = "Identificador del empleado") @PathVariable Long id) {
         return ResponseEntity.ok(service.get(id));
     }
 
@@ -68,9 +71,7 @@ public class EmployeeController {
     @PostMapping
     public ResponseEntity<EmployeeDto> create(@Valid @RequestBody EmployeeDto dto) {
         EmployeeDto created = service.create(dto);
-        return ResponseEntity
-                .created(URI.create("/api/employees/" + created.getId()))
-                .body(created);
+        return ResponseEntity.created(URI.create("/api/employees/" + created.getId())).body(created);
     }
 
     @Operation(summary = "Actualiza completamente un empleado (PUT)")
@@ -81,10 +82,9 @@ public class EmployeeController {
             @ApiResponse(responseCode = "404", description = "No encontrado", content = @Content)
     })
     @PutMapping("/{id}")
-    public ResponseEntity<EmployeeDto> update(
-            @Parameter(description = "ID del empleado") @PathVariable Long id,
-            @Valid @RequestBody EmployeeDto dto) {
-        return ResponseEntity.ok(service.update(id, dto)); // ← update completo
+    public ResponseEntity<EmployeeDto> update(@Parameter(description = "ID del empleado") @PathVariable Long id,
+                                              @Valid @RequestBody EmployeeDto dto) {
+        return ResponseEntity.ok(service.update(id, dto));
     }
 
     @Operation(summary = "Actualiza parcialmente un empleado (PATCH)")
@@ -94,12 +94,10 @@ public class EmployeeController {
             @ApiResponse(responseCode = "404", description = "No encontrado", content = @Content)
     })
     @PatchMapping("/{id}")
-    public ResponseEntity<EmployeeDto> patch(
-            @Parameter(description = "ID del empleado") @PathVariable Long id,
-            @RequestBody EmployeeDto dto) {
-        return ResponseEntity.ok(service.patch(id, dto)); // ← parcial
+    public ResponseEntity<EmployeeDto> patch(@Parameter(description = "ID del empleado") @PathVariable Long id,
+                                             @RequestBody EmployeeDto dto) {
+        return ResponseEntity.ok(service.patch(id, dto));
     }
-
 
     @Operation(summary = "Elimina un empleado")
     @ApiResponses({
@@ -107,8 +105,7 @@ public class EmployeeController {
             @ApiResponse(responseCode = "404", description = "No encontrado", content = @Content)
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @Parameter(description = "ID del empleado") @PathVariable Long id) {
+    public ResponseEntity<Void> delete(@Parameter(description = "ID del empleado") @PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

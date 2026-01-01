@@ -1,0 +1,36 @@
+package com.smarthr.backend.service;
+
+
+import com.smarthr.backend.domain.LeaveRequest;
+import com.smarthr.backend.mapper.LeaveRequestMapper;
+import com.smarthr.backend.repository.EmployeeRepository;
+import com.smarthr.backend.repository.LeaveRequestRepository;
+import com.smarthr.backend.web.ResourceNotFoundException;
+import com.smarthr.backend.web.dto.LeaveRequestDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class LeaveRequestService {
+    private final LeaveRequestRepository repo;
+    private final EmployeeRepository employeeRepo;
+    private final LeaveRequestMapper mapper;
+
+    public LeaveRequestDto create(LeaveRequestDto dto) {
+        var emp = employeeRepo.findById(dto.getEmployeeId()).orElseThrow(() -> new ResourceNotFoundException("Empleado no existe"));
+        LeaveRequest lr = mapper.toEntity(dto);
+        lr.setEmployee(emp);
+        if (lr.getEndDate().isBefore(lr.getStartDate())) throw new IllegalArgumentException("Fecha fin no puede ser anterior a inicio");
+        LeaveRequest saved = repo.save(lr);
+        return mapper.toDto(saved);
+    }
+
+    public LeaveRequestDto changeStatus(Long id, String status) {
+        LeaveRequest lr = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Solicitud no existe"));
+        lr.setStatus(LeaveRequest.LeaveStatus.valueOf(status.toUpperCase()));
+        return mapper.toDto(repo.save(lr));
+    }
+}
