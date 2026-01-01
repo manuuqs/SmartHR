@@ -8,7 +8,6 @@ Este repositorio contiene la arquitectura base del proyecto: backend (Spring Boo
 backend/
 assistant/
 frontend/
-docs/
 docker-compose.yml
 ```
 
