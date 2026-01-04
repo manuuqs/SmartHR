@@ -4,6 +4,7 @@ package com.smarthr.backend.web.controllers;
 import com.smarthr.backend.domain.JobPosition;
 import com.smarthr.backend.repository.JobPositionRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.*;
 import io.swagger.v3.oas.annotations.media.*;
@@ -16,6 +17,7 @@ import java.net.URI;
 import java.util.List;
 
 @Tag(name = "Job Positions", description = "Gestión de posiciones de trabajo")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/job-positions")
 public class JobPositionController {

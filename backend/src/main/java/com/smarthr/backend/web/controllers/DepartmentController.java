@@ -4,6 +4,7 @@ package com.smarthr.backend.web.controllers;
 import com.smarthr.backend.domain.Department;
 import com.smarthr.backend.repository.DepartmentRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import java.net.URI;
 import java.util.List;
 
 @Tag(name = "Departments", description = "Catálogo de departamentos")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/departments")
 @RequiredArgsConstructor

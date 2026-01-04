@@ -159,3 +159,20 @@ INSERT INTO performance_reviews (employee_id, review_date, rating, comments)
 SELECT id, '2024-06-01', 'GOOD', 'Cumple objetivos como freelance'
 FROM employees WHERE email='alfonso@smarthr.dev'
     ON CONFLICT DO NOTHING;
+
+
+-- =====================
+-- USUARIO DE PRUEBA (RRHH)
+-- =====================
+INSERT INTO users (username, password)
+VALUES (
+           'rrhh_admin',
+           '$2a$10$7QJkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQ' -- Contraseña encriptada
+       )
+    ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO users_roles (user_id, roles)
+SELECT id, 'ROLE_RRHH' FROM users WHERE username='rrhh_admin'
+    ON CONFLICT DO NOTHING;
+
+

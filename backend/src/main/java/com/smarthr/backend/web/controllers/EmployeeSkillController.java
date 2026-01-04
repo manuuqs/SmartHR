@@ -8,6 +8,7 @@ import com.smarthr.backend.repository.EmployeeSkillRepository;
 import com.smarthr.backend.repository.SkillRepository;
 import com.smarthr.backend.web.dto.EmployeeSkillDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(name = "Employee Skills", description = "Skills por empleado")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/employees/{employeeId}/skills")
 @RequiredArgsConstructor
