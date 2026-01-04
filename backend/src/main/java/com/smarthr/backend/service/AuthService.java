@@ -1,7 +1,9 @@
 package com.smarthr.backend.service;
 
 
+import com.smarthr.backend.domain.Employee;
 import com.smarthr.backend.domain.User;
+import com.smarthr.backend.repository.EmployeeRepository;
 import com.smarthr.backend.repository.UserRepository;
 import com.smarthr.backend.utils.JwtUtil;
 import com.smarthr.backend.web.dto.LoginRequest;
@@ -16,6 +18,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -30,15 +33,19 @@ public class AuthService {
     }
 
 
-    public void register(String username, String password, String role) {
+    public void register(String username, String password, String role, Long employeeId) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("El usuario ya existe");
         }
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
 
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
         user.setRoles(Set.of(role)); // Asigna el rol indicado
+        user.setEmployee(employee);
         userRepository.save(user);
     }
 

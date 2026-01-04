@@ -32,7 +32,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Void> register(@RequestBody RegisterRequest request) {
-        authService.register(request.getUsername(), request.getPassword(), request.getRole());
+        authService.register(request.getUsername(), request.getPassword(), request.getRole(), request.getEmployeeId());
         return ResponseEntity.ok().build();
     }
 
@@ -42,6 +42,4 @@ public class AuthController {
         authService.deleteUser(username);
         return ResponseEntity.noContent().build();
     }
-
-
 }

@@ -2,7 +2,9 @@
 package com.smarthr.backend.web.controllers;
 
 import com.smarthr.backend.domain.JobPosition;
+import com.smarthr.backend.domain.User;
 import com.smarthr.backend.repository.JobPositionRepository;
+import com.smarthr.backend.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,6 +13,8 @@ import io.swagger.v3.oas.annotations.media.*;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -22,10 +26,12 @@ import java.util.List;
 @RequestMapping("/api/job-positions")
 public class JobPositionController {
 
-
+    private final UserRepository userRepository;
     private final JobPositionRepository repo;
 
-    public JobPositionController(JobPositionRepository repo){ this.repo = repo; }
+    public JobPositionController(JobPositionRepository repo, UserRepository user){ this.repo = repo;
+    this.userRepository = user;
+    }
 
     @Operation(summary = "Lista posiciones")
     @ApiResponses({
@@ -33,7 +39,16 @@ public class JobPositionController {
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = JobPosition.class))))
     })
     @GetMapping
-    public List<JobPosition> list(){ return repo.findAll(); }
+    public List<JobPosition> list(){
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
+        return repo.findAll(); }
 
     @Operation(summary = "Obtiene una posición por id")
     @ApiResponses({
@@ -44,6 +59,14 @@ public class JobPositionController {
     @GetMapping("/{id}")
     public ResponseEntity<JobPosition> get(
             @Parameter(description = "ID de la posición") @PathVariable Long id){
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         return repo.findById(id).map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -57,6 +80,14 @@ public class JobPositionController {
     })
     @PostMapping
     public ResponseEntity<JobPosition> create(@Valid @RequestBody JobPosition p){
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         JobPosition saved = repo.save(p);
         return ResponseEntity.created(URI.create("/api/job-positions/"+saved.getId())).body(saved);
     }
@@ -71,6 +102,14 @@ public class JobPositionController {
     public ResponseEntity<JobPosition> update(
             @Parameter(description = "ID de la posición") @PathVariable Long id,
             @Valid @RequestBody JobPosition p){
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         return repo.findById(id).map(existing -> {
             existing.setTitle(p.getTitle());
             existing.setDescription(p.getDescription());
@@ -87,6 +126,14 @@ public class JobPositionController {
     public ResponseEntity<Void> delete(
             @Parameter(description = "ID de la posición") @PathVariable Long id){
         if (!repo.existsById(id)) return ResponseEntity.notFound().build();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         repo.deleteById(id);
         return ResponseEntity.noContent().build();
     }

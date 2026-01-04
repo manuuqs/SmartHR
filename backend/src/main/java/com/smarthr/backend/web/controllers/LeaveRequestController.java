@@ -1,6 +1,8 @@
 
 package com.smarthr.backend.web.controllers;
 
+import com.smarthr.backend.domain.User;
+import com.smarthr.backend.repository.UserRepository;
 import com.smarthr.backend.service.LeaveRequestService;
 import com.smarthr.backend.web.dto.LeaveRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +11,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -22,10 +26,19 @@ import java.net.URI;
 public class LeaveRequestController {
 
     private final LeaveRequestService service;
+    private final UserRepository userRepository;
 
     @Operation(summary = "Crea solicitud de ausencia")
     @PostMapping
     public ResponseEntity<LeaveRequestDto> create(@Valid @RequestBody LeaveRequestDto dto) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         LeaveRequestDto created = service.create(dto);
         return ResponseEntity.created(URI.create("/api/leave-requests/" + created.getId())).body(created);
     }
@@ -33,6 +46,14 @@ public class LeaveRequestController {
     @Operation(summary = "Aprueba o rechaza una solicitud")
     @PatchMapping("/{id}/status")
     public ResponseEntity<LeaveRequestDto> changeStatus(@PathVariable Long id, @RequestParam String status) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         return ResponseEntity.ok(service.changeStatus(id, status));
     }
 }

@@ -9,6 +9,7 @@ INSERT INTO departments (name, description) VALUES
                                                 ('Data', 'Departamento de análisis de datos')
     ON CONFLICT (name) DO NOTHING;
 
+
 -- =====================
 -- JOB POSITIONS
 -- =====================
@@ -33,6 +34,7 @@ INSERT INTO skills (name, description) VALUES
                                            ('SQL', 'Consultas en bases de datos')
     ON CONFLICT (name) DO NOTHING;
 
+
 -- =====================
 -- EMPLOYEES (5 nuevos)
 -- =====================
@@ -54,6 +56,53 @@ VALUES
      (SELECT id FROM departments WHERE name='Recursos Humanos'),
      (SELECT id FROM job_positions WHERE title='QA Tester'))
     ON CONFLICT (email) DO NOTHING;
+
+
+-- USERS vinculados a EMPLOYEES
+-- =====================
+-- Contraseña encriptada genérica: $2a$10$7QJkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQ
+INSERT INTO users (username, password, employee_id)
+SELECT 'manuel', '$2a$10$7QJkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQ', id FROM employees WHERE email='manuel@smarthr.dev'
+    ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO users (username, password, employee_id)
+SELECT 'julene', '$2a$10$7QJkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQ', id FROM employees WHERE email='julene@smarthr.dev'
+    ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO users (username, password, employee_id)
+SELECT 'alfonso', '$2a$10$7QJkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQ', id FROM employees WHERE email='alfonso@smarthr.dev'
+    ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO users (username, password, employee_id)
+SELECT 'laura', '$2a$10$7QJkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQ', id FROM employees WHERE email='laura@smarthr.dev'
+    ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO users (username, password, employee_id)
+SELECT 'carlos', '$2a$10$7QJkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQ', id FROM employees WHERE email='carlos@smarthr.dev'
+    ON CONFLICT (username) DO NOTHING;
+
+
+-- =====================
+-- ROLES para cada usuario
+-- =====================
+INSERT INTO users_roles (user_id, roles)
+SELECT id, 'ROLE_EMPLOYEE' FROM users WHERE username IN ('manuel','julene','alfonso','laura')
+    ON CONFLICT DO NOTHING;
+
+-- Carlos es RRHH
+INSERT INTO users_roles (user_id, roles)
+SELECT id, 'ROLE_RRHH' FROM users WHERE username='carlos'
+    ON CONFLICT DO NOTHING;
+
+-- Usuario RRHH Admin
+INSERT INTO users (username, password)
+VALUES ('rrhh_admin', '$2a$10$7QJkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQ')
+    ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO users_roles (user_id, roles)
+SELECT id, 'ROLE_RRHH' FROM users WHERE username='rrhh_admin'
+    ON CONFLICT DO NOTHING;
+
 
 -- =====================
 -- EMPLOYEE SKILLS
@@ -158,21 +207,6 @@ FROM employees WHERE email='julene@smarthr.dev'
 INSERT INTO performance_reviews (employee_id, review_date, rating, comments)
 SELECT id, '2024-06-01', 'GOOD', 'Cumple objetivos como freelance'
 FROM employees WHERE email='alfonso@smarthr.dev'
-    ON CONFLICT DO NOTHING;
-
-
--- =====================
--- USUARIO DE PRUEBA (RRHH)
--- =====================
-INSERT INTO users (username, password)
-VALUES (
-           'rrhh_admin',
-           '$2a$10$7QJkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQkYQ' -- Contraseña encriptada
-       )
-    ON CONFLICT (username) DO NOTHING;
-
-INSERT INTO users_roles (user_id, roles)
-SELECT id, 'ROLE_RRHH' FROM users WHERE username='rrhh_admin'
     ON CONFLICT DO NOTHING;
 
 

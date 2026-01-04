@@ -1,6 +1,9 @@
 
 package com.smarthr.backend.web.controllers;
 
+import com.smarthr.backend.domain.User;
+import com.smarthr.backend.repository.ContractRepository;
+import com.smarthr.backend.repository.UserRepository;
 import com.smarthr.backend.service.ContractService;
 import com.smarthr.backend.web.dto.ContractDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +18,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -28,6 +33,8 @@ import java.net.URI;
 public class ContractController {
 
     private final ContractService service;
+    private final UserRepository userRepository;
+    private final ContractRepository repo;
 
     @Operation(summary = "Lista contratos (paginado)")
     @ApiResponses({
@@ -36,6 +43,14 @@ public class ContractController {
     })
     @GetMapping
     public ResponseEntity<Page<ContractDto>> list(@PageableDefault(size = 20) Pageable pageable) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         return ResponseEntity.ok(service.list(pageable));
     }
 
@@ -47,6 +62,19 @@ public class ContractController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<ContractDto> get(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            var entity = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado"));
+            if (!entity.getEmployee().getId().equals(user.getEmployee().getId())) {
+                throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+            }
+        }
+
         return ResponseEntity.ok(service.get(id));
     }
 
@@ -58,6 +86,14 @@ public class ContractController {
     })
     @PostMapping
     public ResponseEntity<ContractDto> create(@Valid @RequestBody ContractDto dto) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         ContractDto created = service.create(dto);
         return ResponseEntity.created(URI.create("/api/contracts/" + created.getId())).body(created);
     }
@@ -65,12 +101,28 @@ public class ContractController {
     @Operation(summary = "Actualiza contrato (PUT)")
     @PutMapping("/{id}")
     public ResponseEntity<ContractDto> update(@PathVariable Long id, @Valid @RequestBody ContractDto dto) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         return ResponseEntity.ok(service.update(id, dto));
     }
 
     @Operation(summary = "Elimina contrato")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

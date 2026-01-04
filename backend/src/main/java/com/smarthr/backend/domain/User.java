@@ -29,6 +29,11 @@ public class User {
     @Column(name = "roles")
     private Set<String> roles = new HashSet<>();
 
+    @OneToOne
+    @JoinColumn(name = "employee_id")
+    private Employee employee;
+
+
 }
 
 

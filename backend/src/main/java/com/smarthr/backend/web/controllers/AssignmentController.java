@@ -1,11 +1,13 @@
 
 package com.smarthr.backend.web.controllers;
 
+import com.smarthr.backend.domain.User;
 import com.smarthr.backend.mapper.AssignmentMapper;
 import com.smarthr.backend.domain.Assignment;
 import com.smarthr.backend.repository.AssignmentRepository;
 import com.smarthr.backend.repository.EmployeeRepository;
 import com.smarthr.backend.repository.ProjectRepository;
+import com.smarthr.backend.repository.UserRepository;
 import com.smarthr.backend.web.dto.AssignmentDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -16,6 +18,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -30,6 +34,7 @@ public class AssignmentController {
 
     private final AssignmentRepository repo;
     private final EmployeeRepository employeeRepo;
+    private final UserRepository userRepository;
     private final ProjectRepository projectRepo;
     private final AssignmentMapper mapper;
 
@@ -52,6 +57,15 @@ public class AssignmentController {
         var prj = projectRepo.findById(dto.getProjectId()).orElse(null);
         if (emp == null || prj == null) return ResponseEntity.badRequest().build();
 
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
+
         Assignment entity = mapper.toEntity(dto);
         entity.setEmployee(emp);
         entity.setProject(prj);
@@ -73,6 +87,14 @@ public class AssignmentController {
     })
     @GetMapping
     public ResponseEntity<List<AssignmentDto>> list() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         var list = repo.findAll().stream().map(mapper::toDto).toList();
         return ResponseEntity.ok(list);
     }
@@ -86,6 +108,19 @@ public class AssignmentController {
     @GetMapping("/{id}")
     public ResponseEntity<AssignmentDto> get(
             @Parameter(description = "ID de la asignación") @PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            var entity = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado"));
+            if (!entity.getEmployee().getId().equals(user.getEmployee().getId())) {
+                throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+            }
+        }
+
         return repo.findById(id)
                 .map(mapper::toDto)
                 .map(ResponseEntity::ok)
@@ -103,6 +138,15 @@ public class AssignmentController {
     public ResponseEntity<?> update(
             @Parameter(description = "ID de la asignación") @PathVariable Long id,
             @Valid @RequestBody AssignmentDto dto) {
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
 
         return repo.findById(id).map(existing -> {
             var emp = employeeRepo.findById(dto.getEmployeeId()).orElse(null);
@@ -133,6 +177,14 @@ public class AssignmentController {
     public ResponseEntity<Void> delete(
             @Parameter(description = "ID de la asignación") @PathVariable Long id) {
         if (!repo.existsById(id)) return ResponseEntity.notFound().build();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+        }
         repo.deleteById(id);
         return ResponseEntity.noContent().build();
     }
