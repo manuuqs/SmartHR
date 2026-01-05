@@ -2,9 +2,13 @@
 package com.smarthr.backend.web.controllers;
 
 import com.smarthr.backend.domain.User;
+import com.smarthr.backend.mapper.AssignmentMapper;
 import com.smarthr.backend.mapper.EmployeeMapper;
+import com.smarthr.backend.mapper.EmployeeSkillMapper;
+import com.smarthr.backend.repository.AssignmentRepository;
+import com.smarthr.backend.repository.EmployeeSkillRepository;
 import com.smarthr.backend.repository.UserRepository;
-import com.smarthr.backend.service.EmployeeService;
+import com.smarthr.backend.service.*;
 import com.smarthr.backend.web.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +30,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 @Tag(name = "Employees", description = "Gestión de empleados con filtros y paginación")
@@ -36,7 +43,16 @@ import java.net.URI;
 public class EmployeeController {
 
     private final EmployeeService service;
+    private final ContractService contractService;
+    private final CompensationService compensationService;
+    private final EmployeeSkillMapper employeeSkillMapper;
+    private final AssignmentMapper assignmentMapper;
+    private final PerformanceReviewService performanceReviewService;
+    private final LeaveRequestService leaveRequestService;
+
     private final UserRepository userRepository;
+    private final EmployeeSkillRepository employeeSkillRepository;
+    private final AssignmentRepository assignmentRepository;
     private final EmployeeMapper mapper;
 
     @Operation(summary = "Lista empleados", description = "Filtra por nombre, rol y ubicación. Resultados paginados.")
@@ -146,10 +162,10 @@ public class EmployeeController {
         return ResponseEntity.noContent().build();
     }
 
-
-    @GetMapping("/me")
-    public ResponseEntity<EmployeeDto> getMyData() {
+    @GetMapping("/me/full")
+    public ResponseEntity<Map<String, Object>> getMyFullData() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        System.out.println("username: " + username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -157,7 +173,39 @@ public class EmployeeController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        return ResponseEntity.ok(mapper.toDto(user.getEmployee()));
+        Long employeeId = user.getEmployee().getId();
+        System.out.println("employeeId: " + employeeId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("employee", mapper.toDto(user.getEmployee()));
+
+        // Skills
+        List<EmployeeSkillDto> skills = employeeSkillRepository.findByEmployeeId(employeeId)
+                .stream().map(employeeSkillMapper::toDto).toList();
+        response.put("skills", skills);
+
+        // Contracts
+        List<ContractDto> contracts = contractService.listByEmployee(employeeId);
+        response.put("contracts", contracts);
+
+        // Compensations
+        List<CompensationDto> compensations = compensationService.listByEmployee(employeeId);
+        response.put("compensations", compensations);
+
+        // Assignments (proyectos)
+        List<AssignmentDto> assignments = assignmentRepository.findByEmployeeId(employeeId)
+                .stream().map(assignmentMapper::toDto).toList();
+        response.put("assignments", assignments);
+
+        // Performance Reviews
+        List<PerformanceReviewDto> reviews = performanceReviewService.listByEmployee(employeeId);
+        response.put("performanceReviews", reviews);
+
+        // Leave Requests
+        List<LeaveRequestDto> leaves = leaveRequestService.listByEmployee(employeeId);
+        response.put("leaveRequests", leaves);
+
+        return ResponseEntity.ok(response);
     }
 
 }

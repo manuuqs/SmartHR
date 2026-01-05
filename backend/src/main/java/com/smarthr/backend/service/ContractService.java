@@ -88,7 +88,7 @@ public class ContractService {
     }
 
     private void validateNoOverlap(Contract candidate, Long excludeId) {
-        List<Contract> existing = repo.findByEmployee_Id(candidate.getEmployee().getId());
+        List<Contract> existing = repo.findByEmployeeId(candidate.getEmployee().getId());
         for (Contract other : existing) {
             if (excludeId != null && other.getId().equals(excludeId)) continue;
             if (datesOverlap(candidate.getStartDate(), candidate.getEndDate(),
@@ -104,4 +104,11 @@ public class ContractService {
         LocalDate end2 = (e2 == null) ? LocalDate.MAX : e2;
         return !end1.isBefore(s2) && !end2.isBefore(s1);
     }
+
+
+    public List<ContractDto> listByEmployee(Long employeeId) {
+        return repo.findByEmployeeId(employeeId)
+                .stream().map(mapper::toDto).toList();
+    }
+
 }

@@ -23,6 +23,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/register").permitAll()
+                        .requestMatchers("/api/employees/me/**").hasAnyAuthority("ROLE_EMPLOYEE", "ROLE_RRHH")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/auth/delete/**").hasAuthority("ROLE_ADMIN") // Solo ADMIN puede eliminar usuarios
                         .requestMatchers("/api/**").hasAuthority("ROLE_RRHH")

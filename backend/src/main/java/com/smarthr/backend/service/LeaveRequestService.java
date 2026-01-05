@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -33,4 +35,11 @@ public class LeaveRequestService {
         lr.setStatus(LeaveRequest.LeaveStatus.valueOf(status.toUpperCase()));
         return mapper.toDto(repo.save(lr));
     }
+
+
+    public List<LeaveRequestDto> listByEmployee(Long employeeId) {
+        return repo.findByEmployeeId(employeeId)
+                .stream().map(mapper::toDto).toList();
+    }
+
 }

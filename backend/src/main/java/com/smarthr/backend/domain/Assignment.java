@@ -1,40 +1,42 @@
-
 package com.smarthr.backend.domain;
 
+
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Entity
-@Table(name = "assignments",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"employee_id","project_id","role_on_project"}))
+@Table(
+        name = "assignments",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"employee_id", "project_id"})
+        }
+)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Assignment {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @Column(name = "role_on_project", length = 100, nullable = false)
-    @NotBlank @Size(max = 100)
+    @Column(name = "role_on_project", nullable = false)
     private String roleOnProject;
 
-    @Column(nullable = false)
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
+    @Column(name = "end_date")
     private LocalDate endDate;
 }

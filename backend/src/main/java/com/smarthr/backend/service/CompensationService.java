@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -95,4 +96,11 @@ public class CompensationService {
     private boolean isNegative(BigDecimal value) {
         return value.signum() < 0;
     }
+
+    public List<CompensationDto> listByEmployee(Long employeeId) {
+        return repo.findByEmployeeId(employeeId)
+                .stream().map(mapper::toDto).toList();
+    }
+
+
 }

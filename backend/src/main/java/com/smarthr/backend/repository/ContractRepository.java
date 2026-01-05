@@ -3,6 +3,6 @@ import com.smarthr.backend.domain.Contract;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ContractRepository extends JpaRepository<Contract, Long> {
-    java.util.List<Contract> findByEmployee_Id(Long employeeId);
+    java.util.List<Contract> findByEmployeeId(Long employeeId);
 }
 

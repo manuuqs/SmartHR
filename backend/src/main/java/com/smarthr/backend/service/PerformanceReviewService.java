@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -90,4 +91,10 @@ public class PerformanceReviewService {
             throw new IllegalArgumentException("comments supera longitud máxima (1000)");
         }
     }
+
+    public List<PerformanceReviewDto> listByEmployee(Long employeeId) {
+        return repo.findByEmployeeId(employeeId)
+                .stream().map(mapper::toDto).toList();
+    }
+
 }

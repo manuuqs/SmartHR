@@ -26,6 +26,11 @@ public class AuthService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        System.out.println("Usuario: " + user.getUsername());
+        System.out.println("passwd: " + request.getPassword());
+        System.out.println("passwd encoded: " +
+                new BCryptPasswordEncoder().encode(request.getPassword()) );
+
         if (!new BCryptPasswordEncoder().matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Credenciales inválidas");
         }

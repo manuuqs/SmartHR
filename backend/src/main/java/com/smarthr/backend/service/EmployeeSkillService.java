@@ -26,7 +26,7 @@ public class EmployeeSkillService {
     @Transactional(readOnly = true)
     public List<EmployeeSkillDto> listByEmployee(Long employeeId) {
         if (!employeeRepo.existsById(employeeId)) throw new ResourceNotFoundException("Empleado no existe");
-        return repo.findByEmployee_Id(employeeId).stream().map(mapper::toDto).toList();
+        return repo.findByEmployeeId(employeeId).stream().map(mapper::toDto).toList();
     }
 
     public EmployeeSkillDto upsertSkill(Long employeeId, EmployeeSkillDto dto) {
