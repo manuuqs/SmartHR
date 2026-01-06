@@ -1,4 +1,4 @@
-package com.smarthr.backend.utils;
+package com.smarthr.backend.security;
 
 
 import io.jsonwebtoken.Claims;
@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 import java.util.Set;
-
-import static java.security.KeyRep.Type.SECRET;
 
 @Component
 public class JwtUtil {

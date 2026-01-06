@@ -2,11 +2,11 @@ package com.smarthr.backend.service;
 
 
 import com.smarthr.backend.domain.EmployeeSkill;
-import com.smarthr.backend.mapper.EmployeeSkillMapper;
+import com.smarthr.backend.web.mapper.EmployeeSkillMapper;
 import com.smarthr.backend.repository.EmployeeRepository;
 import com.smarthr.backend.repository.EmployeeSkillRepository;
 import com.smarthr.backend.repository.SkillRepository;
-import com.smarthr.backend.web.ResourceNotFoundException;
+import com.smarthr.backend.web.exceptions.ResourceNotFoundException;
 import com.smarthr.backend.web.dto.EmployeeSkillDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

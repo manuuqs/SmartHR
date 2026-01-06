@@ -2,7 +2,7 @@ package com.smarthr.backend.web.controllers;
 
 
 import com.smarthr.backend.domain.EmployeeSkill;
-import com.smarthr.backend.mapper.EmployeeSkillMapper;
+import com.smarthr.backend.web.mapper.EmployeeSkillMapper;
 import com.smarthr.backend.repository.EmployeeRepository;
 import com.smarthr.backend.repository.EmployeeSkillRepository;
 import com.smarthr.backend.repository.SkillRepository;

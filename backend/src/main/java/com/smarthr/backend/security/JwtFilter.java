@@ -1,7 +1,6 @@
-package com.smarthr.backend.config;
+package com.smarthr.backend.security;
 
 
-import com.smarthr.backend.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,4 +1,4 @@
-package com.smarthr.backend.mapper;
+package com.smarthr.backend.web.mapper;
 
 import com.smarthr.backend.domain.JobPosition;
 import com.smarthr.backend.web.dto.JobPositionDto;

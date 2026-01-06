@@ -1,4 +1,4 @@
-package com.smarthr.backend.config;
+package com.smarthr.backend.security;
 
 
 import lombok.RequiredArgsConstructor;

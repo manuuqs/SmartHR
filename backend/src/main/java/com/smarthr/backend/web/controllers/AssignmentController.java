@@ -2,7 +2,7 @@
 package com.smarthr.backend.web.controllers;
 
 import com.smarthr.backend.domain.User;
-import com.smarthr.backend.mapper.AssignmentMapper;
+import com.smarthr.backend.web.mapper.AssignmentMapper;
 import com.smarthr.backend.domain.Assignment;
 import com.smarthr.backend.repository.AssignmentRepository;
 import com.smarthr.backend.repository.EmployeeRepository;

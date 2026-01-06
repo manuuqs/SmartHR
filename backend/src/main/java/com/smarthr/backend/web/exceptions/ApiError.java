@@ -1,4 +1,4 @@
-package com.smarthr.backend.web;
+package com.smarthr.backend.web.exceptions;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;

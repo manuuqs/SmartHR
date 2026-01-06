@@ -1,5 +1,5 @@
 
-package com.smarthr.backend.mapper;
+package com.smarthr.backend.web.mapper;
 
 import com.smarthr.backend.domain.Assignment;
 import com.smarthr.backend.domain.Employee;

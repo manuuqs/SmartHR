@@ -1,4 +1,4 @@
-package com.smarthr.backend.web;
+package com.smarthr.backend.web.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

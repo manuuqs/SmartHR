@@ -2,9 +2,9 @@
 package com.smarthr.backend.web.controllers;
 
 import com.smarthr.backend.domain.User;
-import com.smarthr.backend.mapper.AssignmentMapper;
-import com.smarthr.backend.mapper.EmployeeMapper;
-import com.smarthr.backend.mapper.EmployeeSkillMapper;
+import com.smarthr.backend.web.mapper.AssignmentMapper;
+import com.smarthr.backend.web.mapper.EmployeeMapper;
+import com.smarthr.backend.web.mapper.EmployeeSkillMapper;
 import com.smarthr.backend.repository.AssignmentRepository;
 import com.smarthr.backend.repository.EmployeeSkillRepository;
 import com.smarthr.backend.repository.UserRepository;
@@ -162,6 +162,7 @@ public class EmployeeController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Recupera la informacion de un empelado cuando se mete en su cuenta")
     @GetMapping("/me/full")
     public ResponseEntity<Map<String, Object>> getMyFullData() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();

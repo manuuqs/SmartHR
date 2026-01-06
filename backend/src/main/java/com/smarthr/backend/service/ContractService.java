@@ -2,11 +2,11 @@
 package com.smarthr.backend.service;
 
 import com.smarthr.backend.domain.Contract;
-import com.smarthr.backend.mapper.ContractMapper;
+import com.smarthr.backend.web.mapper.ContractMapper;
 import com.smarthr.backend.repository.ContractRepository;
 import com.smarthr.backend.repository.EmployeeRepository;
-import com.smarthr.backend.web.ConflictException;
-import com.smarthr.backend.web.ResourceNotFoundException;
+import com.smarthr.backend.web.exceptions.ConflictException;
+import com.smarthr.backend.web.exceptions.ResourceNotFoundException;
 import com.smarthr.backend.web.dto.ContractDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

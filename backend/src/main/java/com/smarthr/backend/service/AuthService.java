@@ -5,7 +5,7 @@ import com.smarthr.backend.domain.Employee;
 import com.smarthr.backend.domain.User;
 import com.smarthr.backend.repository.EmployeeRepository;
 import com.smarthr.backend.repository.UserRepository;
-import com.smarthr.backend.utils.JwtUtil;
+import com.smarthr.backend.security.JwtUtil;
 import com.smarthr.backend.web.dto.LoginRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
