@@ -75,23 +75,24 @@ services:
 
   # --- Frontend (React + Vite) PRODUCCIÓN por Nginx ---
 
+
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     ports:
-      - "3000:5173"
+      - "3000:3000"   # <-- puerto correcto
     environment:
-      VITE_API_BASE_URL: http://localhost:8080
-      VITE_ASSISTANT_BASE_URL: http://localhost:9090
+      VITE_API_BASE_URL: http://backend:8080
+      VITE_ASSISTANT_BASE_URL: http://assistant:9090
     depends_on:
       backend:
         condition: service_started
       assistant:
         condition: service_started
-
     networks:
       - smarthr_net
+
 
 networks:
   smarthr_net:

@@ -49,7 +49,6 @@ public class EmployeeController {
     private final AssignmentMapper assignmentMapper;
     private final PerformanceReviewService performanceReviewService;
     private final LeaveRequestService leaveRequestService;
-
     private final UserRepository userRepository;
     private final EmployeeSkillRepository employeeSkillRepository;
     private final AssignmentRepository assignmentRepository;
