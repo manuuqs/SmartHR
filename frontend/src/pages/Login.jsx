@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "../styles/Login.css";
+import ThemeSwitch from "../components/ThemeSwitch";
 
 export default function Login() {
     const [username, setUsername] = useState("");
@@ -42,7 +43,8 @@ export default function Login() {
 
     return (
         <div className="container">
-            <div className="slider">
+            <ThemeSwitch />
+            <div className="login-slider">
                 <form className="form" onSubmit={handleSubmit}>
                     <span className="title">Login</span>
 
@@ -51,6 +53,7 @@ export default function Login() {
                             type="text"
                             className="input"
                             required
+                            placeholder=" "
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                         />
@@ -62,6 +65,7 @@ export default function Login() {
                             type="password"
                             className="input"
                             required
+                            placeholder=" "
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
