@@ -1,0 +1,129 @@
+/* Fondo general */
+body {
+    background-color: #212121;
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Contenedor */
+.container {
+    width: 300px;
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    color: #e0e0e0;
+    background-color: #212121;
+    box-shadow:
+            4px 4px 8px #161616,
+            -4px -4px 8px #2c2c2c;
+}
+
+/* Slider */
+.container .slider {
+    width: 100%;
+    display: flex;
+}
+
+/* Formulario */
+.form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 28px;
+    padding: 2em;
+    width: 100%;
+}
+
+/* Título */
+.title {
+    font-weight: 700;
+    font-size: 2em;
+    color: #ffffff;
+}
+
+/* Input wrapper */
+.form_control {
+    width: 100%;
+    position: relative;
+}
+
+/* Label flotante */
+.form_control .label {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    font-size: 0.75em;
+    color: #9e9e9e;
+    pointer-events: none;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+/* Inputs */
+.form_control .input {
+    width: 100%;
+    background-color: #212121;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    padding: 0.6rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    box-shadow:
+            inset 3px 3px 6px #161616,
+            inset -3px -3px 6px #2c2c2c;
+}
+
+/* Focus */
+.form_control .input:focus,
+.form_control .input:valid {
+    box-shadow:
+            inset 1px 1px 3px #161616,
+            inset -1px -1px 3px #2c2c2c;
+}
+
+/* Label animación */
+.form_control .input:focus + .label,
+.form_control .input:valid + .label {
+    transform: translate(-150%, -50%);
+    color: #bdbdbd;
+}
+
+/* Botón */
+form button {
+    width: 100%;
+    background-color: #212121;
+    border: none;
+    color: #ffffff;
+    padding: 0.6rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow:
+            3px 3px 6px #161616,
+            -3px -3px 6px #2c2c2c;
+}
+
+form button:active {
+    box-shadow:
+            inset 3px 3px 6px #161616,
+            inset -3px -3px 6px #2c2c2c;
+}
+
+/* Error */
+.error {
+    font-size: 0.7em;
+    color: #ef5350;
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 90%;
+        max-width: 320px;
+    }
+
+    .form {
+        padding: 1.5em;
+    }
+}

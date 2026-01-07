@@ -1,29 +1,38 @@
-
-# =====================
-# BUILD STAGE (Node)
-# =====================
+# ---------- STAGE 1: Build ----------
 FROM node:20-alpine AS build
+
 WORKDIR /app
 
+# Copiamos dependencias
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
+# Copiamos el resto del proyecto
 COPY . .
-# Si necesitas variables Vite en build, puedes declararlas aquí con ENV
-# ENV VITE_API_BASE_URL=http://localhost:8080
-# ENV VITE_ASSISTANT_BASE_URL=http://localhost:9090
 
+# Variables de entorno para Vite (se inyectan en build time)
+ARG VITE_API_BASE_URL
+ARG VITE_ASSISTANT_BASE_URL
+
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_ASSISTANT_BASE_URL=$VITE_ASSISTANT_BASE_URL
+
+# Build de producción
 RUN npm run build
 
-# =====================
-# RUNTIME STAGE (Nginx)
-# =====================
-FROM nginx:1.25-alpine
-# Copia el resultado del build
+
+# ---------- STAGE 2: Nginx ----------
+FROM nginx:alpine
+
+# Eliminamos config por defecto
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copiamos nuestra config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copiamos el build generado por Vite
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Cambia el puerto a 3000 en el default.conf
-RUN sed -i 's/listen       80;/listen       3000;/' /etc/nginx/conf.d/default.conf
-
 EXPOSE 3000
+
 CMD ["nginx", "-g", "daemon off;"]

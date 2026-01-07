@@ -1,51 +1,78 @@
-
 import { useState } from "react";
-import "./../styles/Login.css";
+import "../styles/Login.css";
 
 export default function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
+
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
-            });
-            if (!response.ok) throw new Error("Error en login");
+            const response = await fetch(
+                `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Credenciales incorrectas");
+            }
+
             const data = await response.json();
+
+            // 🔐 Ejemplo: guardar token
             localStorage.setItem("token", data.token);
-            alert("Login correcto");
-        } catch (error) {
-            alert("Credenciales inválidas");
+
+            console.log("Login correcto", data);
+        } catch (err) {
+            setError(err.message);
         }
     };
 
     return (
-        <div className="login-container">
-            <div className="login-box">
-                <h2>Inicio de sesión</h2>
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        placeholder="Usuario"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                    />
-                    <input
-                        type="password"
-                        placeholder="Contraseña"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                    <button type="submit">Entrar</button>
+        <div className="container">
+            <div className="slider">
+                <form className="form" onSubmit={handleSubmit}>
+                    <span className="title">Login</span>
+
+                    <div className="form_control">
+                        <input
+                            type="text"
+                            className="input"
+                            required
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                        />
+                        <label className="label">Username</label>
+                    </div>
+
+                    <div className="form_control">
+                        <input
+                            type="password"
+                            className="input"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <label className="label">Password</label>
+                    </div>
+
+                    {error && <span className="error">{error}</span>}
+
+                    <button type="submit">Login</button>
                 </form>
             </div>
         </div>
     );
 }
-``
