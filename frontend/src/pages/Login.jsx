@@ -2,14 +2,21 @@ import { useState } from "react";
 import "../styles/Login.css";
 import ThemeSwitch from "../components/ThemeSwitch";
 
+import { useNavigate } from "react-router-dom";
+import { decodeJwt } from "../utils/jwt";
+
 export default function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+
+        const url = import.meta.env.VITE_API_BASE_URL + "/auth/login";
+        console.log("URL de la API:", url, username, password);
 
         try {
             const response = await fetch(
@@ -32,10 +39,22 @@ export default function Login() {
 
             const data = await response.json();
 
-            // 🔐 Ejemplo: guardar token
             localStorage.setItem("token", data.token);
+            const decoded = decodeJwt(data.token);
 
-            console.log("Login correcto", data);
+            if (!decoded || !decoded.roles) {
+                throw new Error("Token inválido");
+            }
+
+            const roles = decoded.roles;
+
+            if (roles.includes("ROLE_RRHH")) {
+                navigate("/rrhh");
+            } else if (roles.includes("ROLE_EMPLOYEE")) {
+                navigate("/employee");
+            } else {
+                throw new Error("Rol no autorizado");
+            }
         } catch (err) {
             setError(err.message);
         }
@@ -46,7 +65,7 @@ export default function Login() {
             <ThemeSwitch />
             <div className="login-slider">
                 <form className="form" onSubmit={handleSubmit}>
-                    <span className="title">Login</span>
+                    <span className="title">SMART HR CENTER</span>
 
                     <div className="form_control">
                         <input

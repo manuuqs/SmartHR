@@ -80,11 +80,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8080
+        VITE_ASSISTANT_BASE_URL: http://localhost:9090
     ports:
-      - "3000:3000"   # <-- puerto correcto
-    environment:
-      VITE_API_BASE_URL: http://backend:8080
-      VITE_ASSISTANT_BASE_URL: http://assistant:9090
+      - "3000:3000"
     depends_on:
       backend:
         condition: service_started
