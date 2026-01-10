@@ -21,7 +21,7 @@ public class AssignmentDto {
     private String projectName;
 
     @NotBlank @Size(max = 100)
-    private String roleOnProject;
+    private String jobPosition;
 
     private LocalDate startDate;
     private LocalDate endDate;

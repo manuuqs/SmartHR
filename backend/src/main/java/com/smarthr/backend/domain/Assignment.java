@@ -31,8 +31,10 @@ public class Assignment {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @Column(name = "role_on_project", nullable = false)
-    private String roleOnProject;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "job_position_id", nullable = false)
+    private JobPosition jobPosition;
+
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;

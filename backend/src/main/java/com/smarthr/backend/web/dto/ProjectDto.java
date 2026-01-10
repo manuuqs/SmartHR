@@ -24,4 +24,7 @@ public class ProjectDto {
 
     @Size(max = 255)
     private String client;
+
+    @Size(max = 255)
+    private String ubication;
 }

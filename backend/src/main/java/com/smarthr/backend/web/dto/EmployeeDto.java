@@ -25,10 +25,6 @@ public class EmployeeDto {
     @Size(max = 120)
     private String name;
 
-    @NotBlank
-    @Size(max = 80)
-    private String role;
-
     @Size(max = 80)
     private String location;
 

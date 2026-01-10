@@ -1,10 +1,15 @@
 import Layout from "../components/Layout";
+import EmployeeCard from "../components/EmployeeCard";
 
 export default function EmployeeDashboard() {
+    const handleLogout = () => {
+        console.log("Cerrar sesión");
+        // Redirigir o limpiar estado de usuario
+    };
+
     return (
-        <Layout>
-            {/* Contenido principal */}
-            <div style={{ marginTop: "100px", padding: "1rem" }}>
+        <Layout employeeCard={<EmployeeCard onLogout={handleLogout} />}>
+            <div style={{ padding: "1rem" }}>
                 <h1>👷 Panel Empleado</h1>
                 <p>Bienvenido al dashboard de empleados.</p>
             </div>

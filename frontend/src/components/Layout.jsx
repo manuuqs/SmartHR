@@ -1,16 +1,12 @@
 import ThemeSwitch from "./ThemeSwitch.jsx";
+import "../styles/Layout.css";
 
-export default function Layout({ children }) {
+export default function Layout({ children, employeeCard }) {
     return (
-        <div className="page-container relative min-h-screen">
-
-            {/* ThemeSwitch en la esquina superior derecha */}
-            <div className="absolute top-4 right-4">
-                <ThemeSwitch />
-            </div>
-
-            {/* Contenido principal */}
-            <div>{children}</div>
-        </div>
+        <>
+            {employeeCard && <div className="employee-card-fixed">{employeeCard}</div>}
+            <div className="theme-switch-wrapper"><ThemeSwitch /></div>
+            <div className="page-container">{children}</div>
+        </>
     );
 }

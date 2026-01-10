@@ -26,16 +26,17 @@ public class EmployeeService {
     private final EmployeeMapper mapper;
 
     @Transactional(readOnly = true)
-    public Page<EmployeeDto> list(String name, String role, String location, Pageable pageable) {
+    public Page<EmployeeDto> list(String name, String jobPosition, String location, Pageable pageable) {
         Page<Employee> page = repository
-                .findByNameContainingIgnoreCaseAndRoleContainingIgnoreCaseAndLocationContainingIgnoreCase(
+                .findByNameContainingIgnoreCaseAndJobPosition_TitleContainingIgnoreCaseAndLocationContainingIgnoreCase(
                         name == null ? "" : name,
-                        role == null ? "" : role,
+                        jobPosition == null ? "" : jobPosition,
                         location == null ? "" : location,
                         pageable
                 );
         return page.map(mapper::toDto);
     }
+
 
     public EmployeeDto get(Long id) {
         Employee e = repository.findById(id)

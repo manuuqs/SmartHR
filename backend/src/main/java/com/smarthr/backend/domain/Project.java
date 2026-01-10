@@ -32,4 +32,7 @@ public class Project {
     @Size(max = 255)
     private String client;
 
+    @Size(max = 255)
+    private String ubication;
+
 }

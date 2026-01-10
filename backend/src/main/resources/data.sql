@@ -37,21 +37,21 @@ INSERT INTO skills (name, description) VALUES
 -- =====================
 -- EMPLOYEES
 -- =====================
-INSERT INTO employees (name, role, location, email, hire_date, department_id, job_position_id)
+INSERT INTO employees (name, location, email, hire_date, department_id, job_position_id)
 VALUES
-    ('Manuel Quijada', 'Backend Developer', 'Madrid', 'manuel@smarthr.dev', '2024-01-01',
+    ('Manuel Quijada', 'Madrid', 'manuel@smarthr.dev', '2024-01-01',
      (SELECT id FROM departments WHERE name='Desarrollo'),
      (SELECT id FROM job_positions WHERE title='Backend Developer')),
-    ('Julene Peña', 'Frontend Developer', 'Barcelona', 'julene@smarthr.dev', '2023-09-15',
+    ('Julene Peña', 'Barcelona', 'julene@smarthr.dev', '2023-09-15',
      (SELECT id FROM departments WHERE name='Desarrollo'),
      (SELECT id FROM job_positions WHERE title='Frontend Developer')),
-    ('Alfonso Sampedro', 'Data Scientist', 'Madrid', 'alfonso@smarthr.dev', '2022-06-10',
+    ('Alfonso Sampedro', 'Madrid', 'alfonso@smarthr.dev', '2022-06-10',
      (SELECT id FROM departments WHERE name='Data'),
      (SELECT id FROM job_positions WHERE title='Data Scientist')),
-    ('Laura Gómez', 'DevOps Engineer', 'Valencia', 'laura@smarthr.dev', '2023-03-20',
+    ('Laura Gómez', 'Valencia', 'laura@smarthr.dev', '2023-03-20',
      (SELECT id FROM departments WHERE name='Desarrollo'),
      (SELECT id FROM job_positions WHERE title='DevOps Engineer')),
-    ('Carlos Ruiz', 'RRHH Manager', 'Sevilla', 'carlos@smarthr.dev', '2024-02-01',
+    ('Carlos Ruiz', 'Sevilla', 'carlos@smarthr.dev', '2024-02-01',
      (SELECT id FROM departments WHERE name='Recursos Humanos'),
      (SELECT id FROM job_positions WHERE title='RRHH Manager'))
     ON CONFLICT (email) DO NOTHING;
@@ -61,80 +61,94 @@ VALUES
 -- =====================
 -- Contraseña encriptada genérica para pruebas
 INSERT INTO users (username, password, employee_id)
-SELECT 'manuel', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='manuel@smarthr.dev'
+SELECT 'MA001', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='manuel@smarthr.dev'
     ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO users (username, password, employee_id)
-SELECT 'julene', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='julene@smarthr.dev'
+SELECT 'JU001', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='julene@smarthr.dev'
     ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO users (username, password, employee_id)
-SELECT 'alfonso', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='alfonso@smarthr.dev'
+SELECT 'AL001', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='alfonso@smarthr.dev'
     ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO users (username, password, employee_id)
-SELECT 'laura', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='laura@smarthr.dev'
+SELECT 'LA001', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='laura@smarthr.dev'
     ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO users (username, password, employee_id)
-SELECT 'carlos', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='carlos@smarthr.dev'
+SELECT 'CA001', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu', id FROM employees WHERE email='carlos@smarthr.dev'
     ON CONFLICT (username) DO NOTHING;
 
 -- =====================
 -- ROLES para cada usuario
 -- =====================
 INSERT INTO users_roles (user_id, roles)
-SELECT id, 'ROLE_EMPLOYEE' FROM users WHERE username IN ('manuel','julene','alfonso','laura')
+SELECT id, 'ROLE_EMPLOYEE' FROM users WHERE username IN ('MA001','JU001','AL001','LA001')
     ON CONFLICT DO NOTHING;
 
 INSERT INTO users_roles (user_id, roles)
-SELECT id, 'ROLE_RRHH' FROM users WHERE username='carlos'
+SELECT id, 'ROLE_RRHH' FROM users WHERE username='CA001'
     ON CONFLICT DO NOTHING;
 
--- Usuario RRHH Admin
-INSERT INTO users (username, password)
-VALUES ('rrhh_admin', '$2a$10$wrwoO0puF6HsqwuVDc4x4.RA1yiRfy0yQKn.v/aWZsTp.bKZSWUnu')
-    ON CONFLICT (username) DO NOTHING;
-
-INSERT INTO users_roles (user_id, roles)
-SELECT id, 'ROLE_RRHH' FROM users WHERE username='rrhh_admin'
-    ON CONFLICT DO NOTHING;
 
 -- =====================
 -- PROJECTS (antes de assignments)
 -- =====================
-INSERT INTO projects (code, name, start_date, client) VALUES
-                                                          ('PRJ001', 'Sistema RRHH', '2024-01-10', 'Cliente A'),
-                                                          ('PRJ002', 'Portal Web Corporativo', '2023-11-01', 'Cliente B'),
-                                                          ('PRJ003', 'Migración Cloud', '2024-02-15', 'Cliente C')
+
+INSERT INTO projects (code, name, start_date, client, ubication) VALUES
+                                                                     ('PRJ001', 'Sistema RRHH', '2024-01-10', 'SMARTHR', 'MADRID'),
+                                                                     ('PRJ002', 'Portal Web Corporativo', '2023-11-01', 'NIKE', 'REMOTE'),
+                                                                     ('PRJ003', 'Migración Cloud', '2024-02-15', 'ACCENTURE', 'BARCELONA'),
+                                                                     ('PRJ004', 'Migración Cloud', '2024-02-18', 'SALESFORCE', 'MADRID'),
+                                                                     ('PRJ005', 'Migración Cloud', '2024-05-20', 'IBM', 'MADRID'),
+                                                                     ('PRJ006', 'Migración Cloud', '2024-08-15', 'MICROSOFT', 'REMOTE')
     ON CONFLICT (code) DO NOTHING;
+
 
 -- =====================
 -- ASSIGNMENTS (cada uno separado)
 -- =====================
-INSERT INTO assignments (employee_id, project_id, role_on_project, start_date)
-VALUES ((SELECT id FROM employees WHERE email='manuel@smarthr.dev'),
-        (SELECT id FROM projects WHERE code='PRJ001'),
-        'Líder Técnico', '2024-01-10')
+
+INSERT INTO assignments (employee_id, project_id, job_position_id, start_date)
+VALUES (
+           (SELECT id FROM employees WHERE email='manuel@smarthr.dev'),
+           (SELECT id FROM projects WHERE code='PRJ005'),
+           (SELECT id FROM job_positions WHERE title='Backend Developer'),
+           '2024-01-10'
+       )
     ON CONFLICT (employee_id, project_id) DO NOTHING;
 
-INSERT INTO assignments (employee_id, project_id, role_on_project, start_date)
-VALUES ((SELECT id FROM employees WHERE email='julene@smarthr.dev'),
-        (SELECT id FROM projects WHERE code='PRJ002'),
-        'Frontend Developer', '2023-11-01')
+
+
+INSERT INTO assignments (employee_id, project_id, job_position_id, start_date)
+VALUES (
+           (SELECT id FROM employees WHERE email='julene@smarthr.dev'),
+           (SELECT id FROM projects WHERE code='PRJ002'),
+           (SELECT id FROM job_positions WHERE title='Frontend Developer'),
+           '2023-11-01'
+       )
     ON CONFLICT (employee_id, project_id) DO NOTHING;
 
-INSERT INTO assignments (employee_id, project_id, role_on_project, start_date)
-VALUES ((SELECT id FROM employees WHERE email='laura@smarthr.dev'),
-        (SELECT id FROM projects WHERE code='PRJ003'),
-        'DevOps', '2024-02-15')
+
+INSERT INTO assignments (employee_id, project_id, job_position_id, start_date)
+VALUES (
+           (SELECT id FROM employees WHERE email='laura@smarthr.dev'),
+           (SELECT id FROM projects WHERE code='PRJ003'),
+           (SELECT id FROM job_positions WHERE title='DevOps Engineer'),
+           '2024-02-15'
+       )
     ON CONFLICT (employee_id, project_id) DO NOTHING;
 
-INSERT INTO assignments (employee_id, project_id, role_on_project, start_date)
-VALUES ((SELECT id FROM employees WHERE email='carlos@smarthr.dev'),
-        (SELECT id FROM projects WHERE code='PRJ001'),
-        'RRHH Representative', '2024-01-10')
+INSERT INTO assignments (employee_id, project_id, job_position_id, start_date)
+VALUES (
+           (SELECT id FROM employees WHERE email='carlos@smarthr.dev'),
+           (SELECT id FROM projects WHERE code='PRJ001'),
+           (SELECT id FROM job_positions WHERE title='RRHH Manager'),
+           '2024-01-10'
+       )
     ON CONFLICT (employee_id, project_id) DO NOTHING;
+
 
 -- =====================
 -- EMPLOYEE SKILLS

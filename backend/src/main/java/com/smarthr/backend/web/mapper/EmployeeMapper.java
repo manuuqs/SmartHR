@@ -27,7 +27,7 @@ public interface EmployeeMapper {
             // Campos auxiliares que no deben mapear hacia entity (name/title del agregado)
             @Mapping(target = "id",        source = "id"),
             @Mapping(target = "name",      source = "name"),
-            @Mapping(target = "role",      source = "role"),
+            @Mapping(target = "jobPosition.title", source = "jobPositionTitle"),
             @Mapping(target = "location",  source = "location"),
             @Mapping(target = "email",     source = "email"),
             @Mapping(target = "hireDate",  source = "hireDate")

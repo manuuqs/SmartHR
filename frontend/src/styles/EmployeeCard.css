@@ -1,0 +1,59 @@
+.card.small {
+    width: 140px;
+    height: 180px;
+    border-radius: 2em;
+    padding: 6px;
+    background-color: var(--card-bg);
+    box-shadow: 3px 3px 15px var(--shadow-dark),
+    -3px -3px 15px var(--shadow-light);
+    color: var(--text-color);
+    transition: background-color 0.4s, color 0.4s, box-shadow 0.4s;
+}
+
+.profileimage {
+    margin-top: 10px;
+    width: 90px;
+    height: 60px;
+    border-radius: 50%;
+}
+
+.pfp {
+    fill: var(--text-color);
+    transition: fill 0.4s;
+    width: 60%;
+    height: 90%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.Name {
+    padding: 6px;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.Name .subtitle {
+    display: block;
+    font-size: 11px;
+    color: var(--label-color);
+    margin-top: 2px;
+}
+
+.logoutbar {
+    margin-top: 8px;
+}
+
+.logout-btn {
+    padding: 0.3em 0.6em;
+    border-radius: 8px;
+    font-size: 12px;
+    border: none;
+    background-color: #ff4d4f;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.logout-btn:hover {
+    background-color: #e04344;
+}

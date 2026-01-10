@@ -36,6 +36,15 @@ body {
 }
 
 
+.page-container {
+    max-width: 1200px;  /* máximo ancho */
+    width: 95%;          /* ocupa casi toda la pantalla */
+    margin: 0 auto;      /* centrado horizontal */
+    padding: 2rem;       /* espacio interno */
+}
+
+
+
 
 h1 {
   font-size: 3.2em;

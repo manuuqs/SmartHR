@@ -11,8 +11,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
-    Page<Employee> findByNameContainingIgnoreCaseAndRoleContainingIgnoreCaseAndLocationContainingIgnoreCase(
-            String name, String role, String location, Pageable pageable
-    );
+    Page<Employee> findByNameContainingIgnoreCaseAndJobPosition_TitleContainingIgnoreCaseAndLocationContainingIgnoreCase(
+            String name, String jobPosition, String location, Pageable pageable);
+
+
 }
 
