@@ -1,8 +1,9 @@
+
 import React from "react";
 import "../styles/EmployeeCard.css";
-import iconoUser from "../assets/iconoUser.png"; // importa tu imagen
+import iconoUser from "../assets/iconoUser.png"; // imagen de perfil
 
-export default function EmployeeCard({ onLogout }) {
+export default function EmployeeCard({ employee, onLogout }) {
     return (
         <div className="card small">
             <center>
@@ -11,15 +12,20 @@ export default function EmployeeCard({ onLogout }) {
                     <img src={iconoUser} alt="Perfil" className="pfp" />
                 </div>
 
-                {/* Nombre y rol */}
+                {/* Nombre y puesto */}
                 <div className="Name">
-                    <p>John Doe</p>
-                    <span className="subtitle">Java Developer</span>
+                    <p>{employee.name}</p>
+                    <span className="subtitle">
+                        {employee.jobPositionTitle}
+                    </span>
                 </div>
 
                 {/* Botón de Log Out */}
                 <div className="logoutbar">
-                    <button className="logout-btn" onClick={onLogout}>
+                    <button
+                        className="logout-btn"
+                        onClick={onLogout}
+                    >
                         Log Out
                     </button>
                 </div>
