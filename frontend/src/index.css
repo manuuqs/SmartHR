@@ -10,7 +10,7 @@
 [data-theme="light"] {
     --bg-color: #f5f5f5;
     --card-bg: #ffffff;
-    --text-color: #212121;
+    --text-color: rgba(33, 33, 33, 0.69);
     --label-color: #616161;
     --shadow-dark: #cfcfcf;
     --shadow-light: #ffffff;

@@ -1,3 +1,4 @@
+/* ------------------ Tarjeta base ------------------ */
 .card.small {
     width: 140px;
     height: 180px;
@@ -7,28 +8,36 @@
     box-shadow: 3px 3px 15px var(--shadow-dark),
     -3px -3px 15px var(--shadow-light);
     color: var(--text-color);
-    transition: background-color 0.4s, color 0.4s, box-shadow 0.4s;
+    transition: background-color 0.4s, color 0.4s, box-shadow 0.4s,
+    width 0.3s, height 0.3s, padding 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
+/* ------------------ Imagen de perfil ------------------ */
 .profileimage {
     margin-top: 10px;
     width: 90px;
     height: 60px;
     border-radius: 50%;
+    overflow: hidden;
 }
 
 .pfp {
-    fill: var(--text-color);
-    transition: fill 0.4s;
-    width: 60%;
-    height: 90%;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     object-fit: cover;
+    transition: width 0.3s, height 0.3s;
 }
 
+/* ------------------ Nombre y puesto ------------------ */
 .Name {
     padding: 6px;
     font-size: 14px;
+    text-align: center;
     margin-top: 4px;
 }
 
@@ -39,6 +48,7 @@
     margin-top: 2px;
 }
 
+/* ------------------ Botón de logout ------------------ */
 .logoutbar {
     margin-top: 8px;
 }
@@ -51,9 +61,73 @@
     background-color: #ff4d4f;
     color: #fff;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, padding 0.3s, font-size 0.3s;
 }
 
 .logout-btn:hover {
     background-color: #e04344;
+}
+
+/* ------------------ Responsive ------------------ */
+@media (max-width: 1024px) {
+    .card.small {
+        width: 120px;
+        height: 160px;
+        padding: 4px;
+    }
+
+    .profileimage {
+        width: 70px;
+        height: 50px;
+    }
+
+    .Name {
+        font-size: 12px;
+    }
+
+    .Name .subtitle {
+        font-size: 10px;
+    }
+
+    .logout-btn {
+        font-size: 11px;
+        padding: 0.25em 0.5em;
+    }
+}
+
+@media (max-width: 768px) {
+    .card.small {
+        position: relative; /* ya no fijo, se mueve con layout */
+        width: 100%;
+        max-width: 200px;
+        height: auto;
+        margin: 0 auto 1rem auto;
+        padding: 8px;
+        border-radius: 1.5em;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .profileimage {
+        width: 50px;
+        height: 50px;
+        margin-top: 0;
+    }
+
+    .Name {
+        font-size: 13px;
+        margin-top: 0;
+        padding: 0 0.5rem;
+    }
+
+    .Name .subtitle {
+        font-size: 10px;
+    }
+
+    .logout-btn {
+        font-size: 11px;
+        padding: 0.25em 0.5em;
+    }
 }

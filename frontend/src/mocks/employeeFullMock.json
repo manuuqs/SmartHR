@@ -1,0 +1,74 @@
+{
+  "skills": [
+    { "id": 1, "employeeId": 1, "skillId": 1, "skillName": "Java", "level": 5 },
+    { "id": 2, "employeeId": 1, "skillId": 2, "skillName": "Spring Boot", "level": 5 },
+    { "id": 3, "employeeId": 1, "skillId": 4, "skillName": "Docker", "level": 5 }
+  ],
+  "performanceReviews": [
+    {
+      "id": 1,
+      "employeeId": 1,
+      "employeeName": "Manuel Quijada",
+      "reviewDate": "2024-06-01",
+      "rating": "EXCELLENT",
+      "comments": "Gran liderazgo en el proyecto"
+    }
+  ],
+  "compensations": [
+    {
+      "id": 1,
+      "employeeId": 1,
+      "employeeName": "Manuel Quijada",
+      "baseSalary": 3500,
+      "bonus": 500,
+      "effectiveFrom": "2024-01-01"
+    }
+  ],
+  "assignments": [
+    {
+      "id": 1,
+      "employeeId": 1,
+      "employeeName": "Manuel Quijada",
+      "projectId": 5,
+      "projectCode": "PRJ005",
+      "projectName": "Migración Cloud",
+      "jobPosition": "Backend Developer",
+      "startDate": "2024-01-10",
+      "endDate": null
+    }
+  ],
+  "leaveRequests": [
+    {
+      "id": 1,
+      "employeeId": 1,
+      "employeeName": "Manuel Quijada",
+      "type": "VACATION",
+      "status": "APPROVED",
+      "startDate": "2024-08-01",
+      "endDate": "2024-08-15",
+      "comments": "Vacaciones de verano"
+    }
+  ],
+  "employee": {
+    "id": 1,
+    "name": "Manuel Quijada",
+    "location": "Madrid",
+    "email": "manuel@smarthr.dev",
+    "hireDate": "2024-01-01",
+    "departmentId": 1,
+    "departmentName": "Desarrollo",
+    "jobPositionId": 1,
+    "jobPositionTitle": "Backend Developer"
+  },
+  "contracts": [
+    {
+      "id": 1,
+      "employeeId": 1,
+      "employeeName": "Manuel Quijada",
+      "type": "PERMANENT",
+      "startDate": "2024-01-01",
+      "endDate": null,
+      "weeklyHours": 40
+    }
+  ]
+}

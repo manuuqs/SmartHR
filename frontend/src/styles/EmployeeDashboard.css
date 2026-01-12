@@ -1,0 +1,222 @@
+/* ------------------ Layout general ------------------ */
+
+.dashboard-layout {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    align-items: flex-start;
+    height: calc(100vh - 120px); /* altura total del dashboard */
+    box-sizing: border-box;
+}
+
+/* Contenedor de las secciones con altura adaptable */
+.dashboard-content {
+    flex: 1;
+    height: 60vh;       /* altura relativa al viewport */
+    min-height: 400px;  /* mínimo para pantallas pequeñas */
+    max-height: 700px;  /* máximo para pantallas grandes */
+    overflow: hidden;   /* evita que la tarjeta crezca */
+    box-sizing: border-box;
+}
+
+/* Contenedor de sección interna */
+.section-view {
+    width: 100%;
+    height: 100%;       /* ocupa todo dashboard-content */
+    display: block;
+}
+
+/* ------------------ InfoCard ------------------ */
+.info-card {
+    height: 100%;              /* llena el contenedor */
+    display: flex;
+    flex-direction: column;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 3px 3px 15px var(--shadow-dark),
+    -3px -3px 15px var(--shadow-light);
+    transition: background-color 0.4s, color 0.4s;
+}
+
+.info-card h2 {
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+    font-size: 1.2rem;
+    color: var(--text-color);
+}
+
+.info-card-content {
+    flex: 1;                   /* ocupa todo el espacio disponible */
+    overflow-y: auto;          /* scroll solo en contenido */
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+/* Inputs dentro de InfoCard */
+.info-card input {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.info-card input:focus {
+    border-color: #161616;
+    background-color: #1a1a1a;
+    box-shadow: inset 0 0 0 1px #161616;
+}
+
+/* ------------------ Menú lateral ------------------ */
+.input {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    background-color: var(--card-bg);
+    justify-content: center;
+    border-radius: 5px;
+    padding: 0.5rem;
+    flex-shrink: 0;
+}
+
+.value {
+    background-color: transparent;
+    border: none;
+    padding: 10px;
+    color: var(--text-color);
+    display: flex;
+    position: relative;
+    gap: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    align-items: center;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.value svg {
+    width: 18px;
+    height: 18px;
+    fill: #7d8590;
+}
+
+.value:not(:active):hover,
+.value:focus {
+    background-color: #21262c;
+}
+
+.value:focus,
+.value:active {
+    background-color: #1a1f24;
+    outline: none;
+}
+
+.value::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: -10px;
+    width: 5px;
+    height: 80%;
+    background-color: #2f81f7;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.value:focus::before,
+.value:active::before {
+    opacity: 1;
+}
+
+.input:hover > :not(.value:hover) {
+    transition: 300ms;
+    filter: blur(1px);
+    transform: scale(0.95, 0.95);
+}
+
+.value.active {
+    background-color: #1a1f24;
+}
+
+.value.active::before {
+    opacity: 1;
+    background-color: #2f81f7;
+}
+
+/* ------------------ Grillas y listas ------------------ */
+.grid {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.skill-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.list-card {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    box-shadow: inset 0 0 0 1px var(--shadow-dark);
+}
+
+.list-card p,
+.list-card strong {
+    color: var(--text-color);
+}
+
+/* ------------------ Scroll personalizado ------------------ */
+.dashboard-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.dashboard-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb {
+    background-color: #2a2a2a;
+    border-radius: 6px;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb:hover {
+    background-color: #3a3a3a;
+}
+
+/* ------------------ Responsive para móviles ------------------ */
+@media (max-width: 768px) {
+    .dashboard-layout {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .input {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        margin-bottom: 1rem;
+    }
+
+    .value {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .dashboard-content {
+        height: 50vh;
+        min-height: 300px;
+        max-height: 500px;
+    }
+}
