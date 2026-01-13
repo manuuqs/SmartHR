@@ -119,13 +119,14 @@ export default function EmployeeDashboard() {
 
                 {/* Menú lateral */}
                 <div className="input">
-                    {["profile", "skills", "projects", "contract", "salary"].map((sec) => {
+                    {["profile", "skills", "projects", "contract", "salary", "reviews"].map((sec) => {
                         const labels = {
                             profile: "👤 Perfil",
                             skills: "🛠 Skills",
                             projects: "📁 Proyectos",
                             contract: "💼 Contrato",
                             salary: "💰 Compensación",
+                            reviews: "⭐ Evaluaciones de desempeño",
                         };
                         return (
                             <button
@@ -149,6 +150,7 @@ export default function EmployeeDashboard() {
                                 <input value={employeeData.employee.email} readOnly />
                                 <input value={employeeData.employee.location} readOnly />
                                 <input value={employeeData.employee.hireDate} readOnly />
+                                <input value={employeeData.employee.department.name} readOnly />
                             </div>
                         </InfoCard>
                     )}
@@ -182,6 +184,7 @@ export default function EmployeeDashboard() {
                                 <div key={c.id} className="grid">
                                     <input value={c.type} readOnly />
                                     <input value={`${c.weeklyHours} h/sem`} readOnly />
+                                    <input value={`Inicio: ${c.startDate}`} readOnly />
                                 </div>
                             ))}
                         </InfoCard>
@@ -190,10 +193,31 @@ export default function EmployeeDashboard() {
                         <InfoCard title="💰 Compensación">
                             {employeeData.compensations.map((c) => (
                                 <div key={c.id} className="grid">
-                                    <input value={`${c.baseSalary} €`} readOnly />
-                                    <input value={`${c.bonus} €`} readOnly />
+                                    <div>
+                                        <strong>Salario base </strong>
+                                        <input value={`${c.baseSalary} €`} readOnly />
+                                    </div>
+                                    <div>
+                                        <strong>Bono </strong>
+                                        <input value={`${c.bonus} €`} readOnly />
+                                    </div>
                                 </div>
                             ))}
+                        </InfoCard>
+                    )}
+                    {section === "reviews" && (
+                        <InfoCard title="⭐ Evaluaciones de desempeño">
+                            {employeeData.reviews.length === 0 ? (
+                                <p>No hay evaluaciones registradas</p>
+                            ) : (
+                                employeeData.reviews.map((r) => (
+                                    <div key={r.id} className="list-card">
+                                        <strong>{r.rating}</strong>
+                                        <p>Fecha: {r.reviewDate}</p>
+                                        <p>{r.comments}</p>
+                                    </div>
+                                ))
+                            )}
                         </InfoCard>
                     )}
                 </div>
