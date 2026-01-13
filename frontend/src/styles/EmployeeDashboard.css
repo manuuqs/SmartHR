@@ -76,13 +76,13 @@
 /* ------------------ Menú lateral ------------------ */
 .input {
     display: flex;
-    flex-direction: column;
-    width: 220px;
+    flex-direction: row;   /* 👈 antes column */
+    width: 100%;
     background-color: var(--card-bg);
-    justify-content: center;
+    justify-content: space-between;
     border-radius: 5px;
     padding: 0.5rem;
-    flex-shrink: 0;
+    gap: 0.5rem;
 }
 
 .value {
