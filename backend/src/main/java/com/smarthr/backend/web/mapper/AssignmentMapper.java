@@ -8,26 +8,27 @@ import com.smarthr.backend.domain.JobPosition;
 import com.smarthr.backend.web.dto.AssignmentDto;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", builder = @Builder(disableBuilder = true))
+@Mapper(componentModel = "spring", uses = { ProjectMapper.class }, builder = @Builder(disableBuilder = true))
 public interface AssignmentMapper {
 
+    // Convierte entidad -> DTO
     @Mappings({
-            @Mapping(source = "employee.id",    target = "employeeId"),
-            @Mapping(source = "employee.name",  target = "employeeName"),
-            @Mapping(source = "project.id",     target = "projectId"),
-            @Mapping(source = "project.code",   target = "projectCode"),
-            @Mapping(source = "project.name",   target = "projectName"),
-            @Mapping(source = "jobPosition.title", target = "jobPosition") // Convertimos entidad a String
+            @Mapping(source = "employee.id", target = "employeeId"),
+            @Mapping(source = "employee.name", target = "employeeName"),
+            @Mapping(source = "project", target = "project"), // Usa ProjectMapper
+            @Mapping(source = "jobPosition.title", target = "jobPosition")
     })
     AssignmentDto toDto(Assignment entity);
 
+    // Convierte DTO -> entidad
     @Mappings({
-            @Mapping(source = "employeeId",   target = "employee",    qualifiedByName = "refEmployee"),
-            @Mapping(source = "projectId",    target = "project",     qualifiedByName = "refProject"),
-            @Mapping(source = "jobPosition",  target = "jobPosition", qualifiedByName = "refJobPosition") // Convertimos String a entidad
+            @Mapping(source = "employeeId", target = "employee", qualifiedByName = "refEmployee"),
+            @Mapping(source = "project.id", target = "project", qualifiedByName = "refProject"),
+            @Mapping(source = "jobPosition", target = "jobPosition", qualifiedByName = "refJobPosition")
     })
     Assignment toEntity(AssignmentDto dto);
 
+    // Métodos auxiliares para referencias
     @Named("refEmployee")
     default Employee refEmployee(Long id) {
         if (id == null) return null;

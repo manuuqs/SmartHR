@@ -45,23 +45,21 @@ public class AssignmentController {
             @ApiResponse(responseCode = "400", description = "Validación fallida", content = @Content),
             @ApiResponse(responseCode = "409", description = "Conflicto (unicidad)", content = @Content)
     })
-    @PostMapping
-    public ResponseEntity<AssignmentDto> create(
-            @Valid @RequestBody AssignmentDto dto) {
 
-        if (dto.getEmployeeId() == null || dto.getProjectId() == null) {
+    @PostMapping
+    public ResponseEntity<AssignmentDto> create(@Valid @RequestBody AssignmentDto dto) {
+        if (dto.getEmployeeId() == null || dto.getProject() == null || dto.getProject().getId() == null) {
             return ResponseEntity.badRequest().build();
         }
 
         var emp = employeeRepo.findById(dto.getEmployeeId()).orElse(null);
-        var prj = projectRepo.findById(dto.getProjectId()).orElse(null);
+        var prj = projectRepo.findById(dto.getProject().getId()).orElse(null);
         if (emp == null || prj == null) return ResponseEntity.badRequest().build();
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Si no es RRHH y el ID no coincide con su empleado, denegar
         if (!user.getRoles().contains("ROLE_RRHH")) {
             throw new AccessDeniedException("No tienes permiso para ver otros empleados");
         }
@@ -79,6 +77,7 @@ public class AssignmentController {
         AssignmentDto out = mapper.toDto(saved);
         return ResponseEntity.created(URI.create("/api/assignments/" + saved.getId())).body(out);
     }
+
 
     @Operation(summary = "Lista todas las asignaciones")
     @ApiResponses({
@@ -134,6 +133,7 @@ public class AssignmentController {
             @ApiResponse(responseCode = "400", description = "Validación fallida", content = @Content),
             @ApiResponse(responseCode = "404", description = "No encontrada", content = @Content)
     })
+
     @PutMapping("/{id}")
     public ResponseEntity<?> update(
             @Parameter(description = "ID de la asignación") @PathVariable Long id,
@@ -143,21 +143,28 @@ public class AssignmentController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Si no es RRHH y el ID no coincide con su empleado, denegar
+        // Validación de permisos
         if (!user.getRoles().contains("ROLE_RRHH")) {
-            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
+            throw new AccessDeniedException("No tienes permiso para modificar asignaciones");
         }
 
         return repo.findById(id).map(existing -> {
+            // Validar datos del DTO
+            if (dto.getEmployeeId() == null || dto.getProject() == null || dto.getProject().getId() == null) {
+                return ResponseEntity.badRequest().build();
+            }
+
             var emp = employeeRepo.findById(dto.getEmployeeId()).orElse(null);
-            var prj = projectRepo.findById(dto.getProjectId()).orElse(null);
+            var prj = projectRepo.findById(dto.getProject().getId()).orElse(null);
             if (emp == null || prj == null) return ResponseEntity.badRequest().build();
 
+            // Mapear y actualizar
             Assignment updated = mapper.toEntity(dto);
             updated.setId(id);
             updated.setEmployee(emp);
             updated.setProject(prj);
 
+            // Validar fechas
             if (updated.getStartDate() != null && updated.getEndDate() != null
                     && updated.getEndDate().isBefore(updated.getStartDate())) {
                 return ResponseEntity.badRequest().build();
@@ -167,6 +174,7 @@ public class AssignmentController {
             return ResponseEntity.ok(mapper.toDto(saved));
         }).orElse(ResponseEntity.notFound().build());
     }
+
 
     @Operation(summary = "Elimina una asignación")
     @ApiResponses({

@@ -16,9 +16,7 @@ public class AssignmentDto {
     private Long employeeId;
     private String employeeName;
 
-    private Long projectId;
-    private String projectCode;
-    private String projectName;
+    private ProjectDto project;
 
     @NotBlank @Size(max = 100)
     private String jobPosition;
