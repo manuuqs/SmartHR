@@ -220,3 +220,23 @@
         max-height: 500px;
     }
 }
+
+.employee-card-wrapper {
+    position: absolute;   /* flota sobre el contenido */
+    top: 16px;
+    left: 16px;
+    z-index: 10;
+}
+
+/* Responsive para móviles: integrar al flujo */
+@media (max-width: 768px) {
+    .employee-card-wrapper {
+        position: relative; /* ya no flota */
+        top: auto;
+        left: auto;
+        margin: 0 auto 1rem auto; /* centrado sobre el contenido */
+        display: flex;
+        justify-content: center;
+        z-index: auto;
+    }
+}

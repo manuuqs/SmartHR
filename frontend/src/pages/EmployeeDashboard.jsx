@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import Layout from "../components/Layout";
 import EmployeeCard from "../components/EmployeeCard";
 import InfoCard from "../components/InfoCard";
+import ThemeSwitch from "../components/ThemeSwitch.jsx";
 import "../styles/EmployeeDashboard.css";
 import mockData from "../mocks/employeeFullMock.json";
 
@@ -10,41 +10,6 @@ export default function EmployeeDashboard() {
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState("profile");
 
-    const token = localStorage.getItem("token");
-    const url = `${import.meta.env.VITE_API_BASE_URL}/api/employees/me/full`;
-
-    // Ejemplo de fetch real (comentado)
-    // useEffect(() => {
-    //   fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-    //     .then((res) => {
-    //       if (!res.ok) throw new Error("Error al cargar datos");
-    //       return res.json();
-    //     })
-    //     .then((data) => {
-    //       const normalizedData = {
-    //         employee: {
-    //           id: data.employee.id,
-    //           name: data.employee.name,
-    //           email: data.employee.email,
-    //           location: data.employee.location,
-    //           hireDate: data.employee.hireDate,
-    //           department: { name: data.employee.departmentName },
-    //           jobPosition: { title: data.employee.jobPositionTitle },
-    //         },
-    //         skills: data.skills,
-    //         assignments: data.assignments,
-    //         contracts: data.contracts,
-    //         compensations: data.compensations,
-    //         reviews: data.performanceReviews,
-    //         leaveRequests: data.leaveRequests,
-    //       };
-    //       setEmployeeData(normalizedData);
-    //     })
-    //     .catch((err) => console.error(err))
-    //     .finally(() => setLoading(false));
-    // }, [token]);
-
-    // Simulación con mockData
     useEffect(() => {
         setTimeout(() => {
             const normalizedData = {
@@ -78,8 +43,13 @@ export default function EmployeeDashboard() {
     };
 
     return (
-        <Layout
-            employeeCard={
+        <div className="dashboard-container">
+            {/* ThemeSwitch arriba a la derecha */}
+            <div className="theme-switch-wrapper">
+                <ThemeSwitch />
+            </div>
+
+            <div className="employee-card-wrapper">
                 <EmployeeCard
                     employee={{
                         name: employeeData.employee.name,
@@ -87,10 +57,9 @@ export default function EmployeeDashboard() {
                     }}
                     onLogout={handleLogout}
                 />
-            }
-        >
-            <div className="dashboard-layout">
-                {/* MENÚ LATERAL */}
+            </div>
+
+                {/* Menú lateral */}
                 <div className="input">
                     {["profile", "skills", "projects", "contract", "salary"].map((sec) => {
                         const labels = {
@@ -112,7 +81,8 @@ export default function EmployeeDashboard() {
                     })}
                 </div>
 
-                {/* CONTENIDO */}
+            {/* Contenido principal */}
+            <div className="dashboard-layout">
                 <div className="dashboard-content">
                     {section === "profile" && (
                         <InfoCard title="📄 Información Personal">
@@ -124,7 +94,6 @@ export default function EmployeeDashboard() {
                             </div>
                         </InfoCard>
                     )}
-
                     {section === "skills" && (
                         <InfoCard title="🛠 Skills">
                             {employeeData.skills.map((s) => (
@@ -136,7 +105,6 @@ export default function EmployeeDashboard() {
                             ))}
                         </InfoCard>
                     )}
-
                     {section === "projects" && (
                         <InfoCard title="📁 Proyectos">
                             {employeeData.assignments.map((a) => (
@@ -150,7 +118,6 @@ export default function EmployeeDashboard() {
                             ))}
                         </InfoCard>
                     )}
-
                     {section === "contract" && (
                         <InfoCard title="💼 Contrato">
                             {employeeData.contracts.map((c) => (
@@ -161,7 +128,6 @@ export default function EmployeeDashboard() {
                             ))}
                         </InfoCard>
                     )}
-
                     {section === "salary" && (
                         <InfoCard title="💰 Compensación">
                             {employeeData.compensations.map((c) => (
@@ -174,6 +140,6 @@ export default function EmployeeDashboard() {
                     )}
                 </div>
             </div>
-        </Layout>
+        </div>
     );
 }
