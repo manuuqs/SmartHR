@@ -10,6 +10,64 @@ export default function EmployeeDashboard() {
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState("profile");
 
+    const token = localStorage.getItem("token");
+    // const url = `${import.meta.env.VITE_API_BASE_URL}/api/employees/me/full`;
+    //
+    // useEffect(() => {
+    //     fetch(url, { headers: { Authorization: Bearer ${token} } })
+    //         .then(res => { if (!res.ok) throw new Error("Error al cargar datos");
+    //             return res.json(); })
+    //         .then(data => {
+    //             const normalizedData = {
+    //                 employee: {
+    //                     id: data.employee.id,
+    //                     name: data.employee.name,
+    //                     email: data.employee.email,
+    //                     location: data.employee.location,
+    //                     hireDate: data.employee.hireDate,
+    //                     department: { id: data.employee.departmentId,
+    //                         name: data.employee.departmentName },
+    //                     jobPosition: { id: data.employee.jobPositionId,
+    //                         title: data.employee.jobPositionTitle }
+    //                 },
+    //                 skills: data.skills.map(s => ({
+    //                     id: s.id,
+    //                     skillId: s.skillId,
+    //                     name: s.skillName,
+    //                     level: s.level })),
+    //                 assignments: data.assignments.map(a => ({
+    //                     id: a.id,
+    //                     projectId: a.projectId,
+    //                     projectCode: a.projectCode,
+    //                     projectName: a.projectName,
+    //                     jobPosition: a.jobPosition,
+    //                     startDate: a.startDate,
+    //                     endDate: a.endDate })),
+    //                 contracts: data.contracts.map(c => ({
+    //                     id: c.id,
+    //                     type: c.type,
+    //                     startDate: c.startDate,
+    //                     endDate: c.endDate,
+    //                     weeklyHours: c.weeklyHours })),
+    //                 compensations: data.compensations.map(c => ({
+    //                     id: c.id,
+    //                     baseSalary: c.baseSalary,
+    //                     bonus: c.bonus,
+    //                     effectiveFrom: c.effectiveFrom })),
+    //                 reviews: data.performanceReviews.map(r => ({
+    //                     id: r.id,
+    //                     date: r.reviewDate,
+    //                     rating: r.rating,
+    //                     comments: r.comments })),
+    //                 leaveRequests: data.leaveRequests.map(l => ({
+    //                     id: l.id,
+    //                     type: l.type,
+    //                     status: l.status,
+    //                     startDate: l.startDate,
+    //                     endDate: l.endDate,
+    //                     comments: l.comments })) };
+    //             setEmployeeData(normalizedData); }) .catch(err => console.error(err)) .finally(() => setLoading(false)); }, [token]);
+
     useEffect(() => {
         setTimeout(() => {
             const normalizedData = {
