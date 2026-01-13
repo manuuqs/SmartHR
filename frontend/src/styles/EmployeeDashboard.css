@@ -67,10 +67,69 @@
     outline: none;
 }
 
-.info-card input:focus {
-    border-color: #161616;
-    background-color: #1a1a1a;
-    box-shadow: inset 0 0 0 1px #161616;
+.info-card input:focus,
+.info-card input:focus-visible,
+.info-card input[readonly]:focus,
+.info-card input[readonly]:focus-visible,
+.info-card .grid input:focus {
+    border-color: var(--input-focus-border) !important;
+    background-color: var(--input-focus-bg) !important;
+    color: var(--input-focus-text) !important;
+    -webkit-text-fill-color: var(--input-focus-text) !important; /* Safari/Chrome */
+    caret-color: var(--input-focus-text) !important;
+    box-shadow: inset 0 0 0 1px var(--input-focus-border) !important;
+}
+
+/* En modo claro: forzar un fondo más claro para inputs "seleccionados" y asegurarnos de que el texto sea legible */
+[data-theme="light"] .info-card input:focus,
+[data-theme="light"] .info-card input:focus-visible,
+[data-theme="light"] .info-card input[disabled],
+[data-theme="light"] .info-card input[disabled]:focus,
+[data-theme="light"] .display-input:focus,
+[data-theme="light"] .display-input.focus,
+[data-theme="light"] .display-input[aria-selected="true"] {
+    background-color: var(--input-focus-bg) !important; /* color claro */
+    border-color: var(--input-focus-border) !important;
+    color: var(--text-color) !important; /* texto oscuro en modo claro */
+    -webkit-text-fill-color: var(--text-color) !important;
+}
+
+/* Si algún elemento localmente usa #213547FF como fondo, sobreescribimos con el fondo claro */
+[data-theme="light"] *[style*="#213547"],
+[data-theme="light"] *[style*="#213547FF"],
+[data-theme="light"] *[style*="#213547ff"] {
+    background-color: var(--input-focus-bg) !important;
+    color: var(--text-color) !important;
+    -webkit-text-fill-color: var(--text-color) !important;
+}
+
+/* Catch rgb/rgba inline styles equivalentes a #213547 */
+[data-theme="light"] *[style*="rgb(33, 53, 71)"],
+[data-theme="light"] *[style*="rgb(33,53,71)"],
+[data-theme="light"] *[style*="rgba(33, 53, 71"],
+[data-theme="light"] *[style*="rgba(33,53,71"],
+[data-theme="light"] *[style*="rgba(33, 53, 71, 1)"],
+[data-theme="light"] *[style*="rgba(33,53,71,1)"] {
+    background-color: var(--input-focus-bg) !important;
+    color: var(--text-color) !important;
+    -webkit-text-fill-color: var(--text-color) !important;
+}
+
+/* Asegurar selección legible en modo claro */
+[data-theme="light"] .info-card input::selection,
+[data-theme="light"] .display-input::selection {
+    color: var(--input-selection-text) !important;
+    background: var(--input-selection-bg) !important;
+}
+
+/* Selección de texto dentro de inputs */
+.info-card input::selection {
+    color: var(--input-selection-text);
+    background: var(--input-selection-bg);
+}
+.info-card input::-moz-selection {
+    color: var(--input-selection-text);
+    background: var(--input-selection-bg);
 }
 
 /* ------------------ Menú lateral ------------------ */
@@ -89,7 +148,7 @@
     background-color: transparent;
     border: none;
     padding: 10px;
-    color: var(--text-color);
+    color: rgb(255 55 55 / 87%); /* color fijado a rojo según petición */
     display: flex;
     position: relative;
     gap: 8px;
@@ -239,4 +298,47 @@
         justify-content: center;
         z-index: auto;
     }
+}
+
+/* En modo claro: cuando un input o display-input está en foco, reasignar --text-color-focus para asegurar legibilidad */
+[data-theme="light"] .info-card input:focus,
+[data-theme="light"] .info-card input:focus-visible,
+[data-theme="light"] .display-input:focus,
+[data-theme="light"] .display-input:focus-visible {
+    /* --text-color asignada por :root [data-theme="light"]; aquí nos aseguramos de usar la variable de foco */
+    --text-color-focus: var(--text-color-focus);
+}
+
+/* Aplicar color usando la variable de foco cuando esté definida */
+.info-card input,
+.display-input {
+    color: var(--text-color) !important;
+    -webkit-text-fill-color: var(--text-color) !important;
+}
+
+.info-card input:focus,
+.info-card input:focus-visible,
+.display-input:focus,
+.display-input:focus-visible {
+    color: var(--text-color-focus, var(--text-color)) !important;
+    -webkit-text-fill-color: var(--text-color-focus, var(--text-color)) !important;
+}
+
+/* FORZAR: en modo claro, texto blanco para inputs/display-inputs enfocados (prioridad máxima) */
+[data-theme="light"] .info-card input:focus,
+[data-theme="light"] .info-card input:focus-visible,
+[data-theme="light"] .display-input:focus,
+[data-theme="light"] .display-input:focus-visible {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff !important;
+}
+
+/* Selección legible cuando el input está enfocado en modo claro */
+[data-theme="light"] .info-card input::selection,
+[data-theme="light"] .display-input::selection,
+[data-theme="light"] .info-card input::-moz-selection,
+[data-theme="light"] .display-input::-moz-selection {
+    color: #ffffff !important;
+    background: var(--input-selection-bg) !important;
 }

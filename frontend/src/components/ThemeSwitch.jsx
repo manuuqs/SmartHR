@@ -6,6 +6,44 @@ export default function ThemeSwitch() {
 
     useEffect(() => {
         document.body.setAttribute("data-theme", darkMode ? "dark" : "light");
+
+        // Reemplazar elementos con fondo #213547 en modo claro para asegurar legibilidad
+        const replaceFocusBg = (toLight) => {
+            try {
+                const root = document.documentElement;
+                const newBg = getComputedStyle(root).getPropertyValue("--input-focus-bg") || "#eaf4ff";
+                const newText = getComputedStyle(root).getPropertyValue("--text-color") || "#212121";
+                const els = document.querySelectorAll("input, textarea, .display-input, [role='textbox']");
+                els.forEach((el) => {
+                    const cs = getComputedStyle(el);
+                    const bg = cs.backgroundColor || "";
+                    // Detectar rgb(33, 53, 71) o rgba(33, 53, 71, 1) o presencia del hex en style
+                    const has213547 = (bg === "rgb(33, 53, 71)") || (bg === "rgba(33, 53, 71, 1)") || (el.getAttribute("style") || "").toLowerCase().includes("213547");
+                    if (toLight) {
+                        if (has213547) {
+                            el.style.setProperty("background-color", newBg, "important");
+                            el.style.setProperty("color", newText, "important");
+                            el.setAttribute("data-replaced-bg", "true");
+                        }
+                    } else {
+                        if (el.getAttribute("data-replaced-bg") === "true") {
+                            el.style.removeProperty("background-color");
+                            el.style.removeProperty("color");
+                            el.removeAttribute("data-replaced-bg");
+                        }
+                    }
+                });
+            } catch (err) {
+                // fallback silencioso
+                // console.error(err);
+            }
+        };
+
+        // aplicar reemplazo tras un pequeño delay para que estilos globales apliquen
+        setTimeout(() => replaceFocusBg(!darkMode), 100);
+
+        // limpiar al desmontar o cuando cambie
+        return () => replaceFocusBg(false);
     }, [darkMode]);
 
     return (
@@ -78,7 +116,7 @@ const Wrapper = styled.div`
         bottom: 0.5em;
         transition: 0.4s;
         transition-timing-function: cubic-bezier(0.81, -0.04, 0.38, 1.5);
-        box-shadow: inset 8px -4px 0px 0px #fff;
+        box-shadow: inset 8px -4px 0 0 #fff;
     }
 
     .star {
@@ -116,7 +154,7 @@ const Wrapper = styled.div`
 
     .switch input:checked + .slider:before {
         transform: translateX(1.8em);
-        box-shadow: inset 15px -4px 0px 15px #ffcf48;
+        box-shadow: inset 15px -4px 0 15px #ffcf48;
     }
 
     .switch input:checked + .slider {

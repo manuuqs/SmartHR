@@ -2,18 +2,36 @@
     --bg-color: #212121;
     --card-bg: #212121;
     --text-color: #ffffff;
+    --text-color-focus: #ffffff;
     --label-color: #9e9e9e;
     --shadow-dark: #161616;
     --shadow-light: #2c2c2c;
+
+    /* Variables por defecto para inputs */
+    --input-focus-border: #161616;
+    --input-focus-bg: #1a1a1a;
+    --input-focus-text: var(--text-color);
+    --input-selection-text: var(--text-color);
+    --input-selection-bg: #2a2a2a;
 }
 
 [data-theme="light"] {
     --bg-color: #f5f5f5;
     --card-bg: #ffffff;
-    --text-color: rgba(33, 33, 33, 0.69);
+    --text-color: rgba(33, 33, 33, 0.87); /* texto más oscuro para mejor contraste */
+    --text-color-focus: #ffffff; /* override usado cuando un input está en foco en modo light */
     --label-color: #616161;
     --shadow-dark: #cfcfcf;
     --shadow-light: #ffffff;
+
+    --input-focus-border: #b0c4de;
+    --input-focus-bg: #eaf4ff; /* tono claro azulado */
+    /* usar el color de foco (blanco) para el texto dentro del input enfocado */
+    --input-focus-text: var(--text-color-focus);
+
+    /* selección debe usar el color de texto de foco (blanco) */
+    --input-selection-text: var(--text-color-focus);
+    --input-selection-bg: #cfe8ff;
 }
 
 
@@ -73,7 +91,7 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
+    color: var(--text-color);
     background-color: #ffffff;
   }
   a:hover {

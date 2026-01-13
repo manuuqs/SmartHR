@@ -87,10 +87,10 @@ export default function EmployeeDashboard() {
                     {section === "profile" && (
                         <InfoCard title="📄 Información Personal">
                             <div className="grid">
-                                <input value={employeeData.employee.name} disabled />
-                                <input value={employeeData.employee.email} disabled />
-                                <input value={employeeData.employee.location} disabled />
-                                <input value={employeeData.employee.hireDate} disabled />
+                                <input value={employeeData.employee.name} readOnly />
+                                <input value={employeeData.employee.email} readOnly />
+                                <input value={employeeData.employee.location} readOnly />
+                                <input value={employeeData.employee.hireDate} readOnly />
                             </div>
                         </InfoCard>
                     )}
@@ -122,8 +122,8 @@ export default function EmployeeDashboard() {
                         <InfoCard title="💼 Contrato">
                             {employeeData.contracts.map((c) => (
                                 <div key={c.id} className="grid">
-                                    <input value={c.type} disabled />
-                                    <input value={`${c.weeklyHours} h/sem`} disabled />
+                                    <input value={c.type} readOnly />
+                                    <input value={`${c.weeklyHours} h/sem`} readOnly />
                                 </div>
                             ))}
                         </InfoCard>
@@ -132,8 +132,8 @@ export default function EmployeeDashboard() {
                         <InfoCard title="💰 Compensación">
                             {employeeData.compensations.map((c) => (
                                 <div key={c.id} className="grid">
-                                    <input value={`${c.baseSalary} €`} disabled />
-                                    <input value={`${c.bonus} €`} disabled />
+                                    <input value={`${c.baseSalary} €`} readOnly />
+                                    <input value={`${c.bonus} €`} readOnly />
                                 </div>
                             ))}
                         </InfoCard>
