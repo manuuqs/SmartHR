@@ -81,16 +81,32 @@ export default function EmployeeDashboard() {
                     jobPosition: { title: mockData.employee.jobPositionTitle },
                 },
                 skills: mockData.skills,
-                assignments: mockData.assignments,
+                assignments: mockData.assignments.map(a => ({
+                    id: a.id,
+                    jobPosition: a.jobPosition,
+                    startDate: a.startDate,
+                    endDate: a.endDate,
+                    project: {
+                        id: a.project.id,
+                        code: a.project.code,
+                        name: a.project.name,
+                        client: a.project.client,
+                        ubication: a.project.ubication,
+                        startDate: a.project.startDate,
+                        endDate: a.project.endDate
+                    }
+                })),
                 contracts: mockData.contracts,
                 compensations: mockData.compensations,
                 reviews: mockData.performanceReviews,
-                leaveRequests: mockData.leaveRequests,
+                leaveRequests: mockData.leaveRequests
             };
+
             setEmployeeData(normalizedData);
             setLoading(false);
         }, 500);
     }, []);
+
 
     if (loading) return <p>Cargando...</p>;
     if (!employeeData) return <p>Error al cargar datos</p>;
@@ -119,7 +135,7 @@ export default function EmployeeDashboard() {
 
                 {/* Menú lateral */}
                 <div className="input">
-                    {["profile", "skills", "projects", "contract", "salary", "reviews"].map((sec) => {
+                    {["profile", "skills", "projects", "contract", "salary", "reviews", "leaves"].map((sec) => {
                         const labels = {
                             profile: "👤 Perfil",
                             skills: "🛠 Skills",
@@ -127,6 +143,7 @@ export default function EmployeeDashboard() {
                             contract: "💼 Contrato",
                             salary: "💰 Compensación",
                             reviews: "⭐ Evaluaciones de desempeño",
+                            leaves: "🏖 Ausencias",
                         };
                         return (
                             <button
@@ -168,16 +185,20 @@ export default function EmployeeDashboard() {
                     {section === "projects" && (
                         <InfoCard title="📁 Proyectos">
                             {employeeData.assignments.map((a) => (
-                                <div key={a.projectId ?? a.projectName} className="list-card">
-                                    <strong>{a.projectName}</strong>
-                                    <p>{a.jobPosition}</p>
+                                <div key={a.id} className="list-card">
+                                    <strong>{a.project.name}</strong>
+                                    <p>Código: {a.project.code}</p>
+                                    <p>Cliente: {a.project.client}</p>
+                                    <p>Ubicación: {a.project.ubication}</p>
+                                    <p>Puesto: {a.jobPosition}</p>
                                     <p>
-                                        {a.startDate} → {a.endDate ?? "Actual"}
+                                        Asignación: {a.startDate} → {a.endDate ?? "Actual"}
                                     </p>
                                 </div>
                             ))}
                         </InfoCard>
                     )}
+
                     {section === "contract" && (
                         <InfoCard title="💼 Contrato">
                             {employeeData.contracts.map((c) => (
@@ -217,6 +238,35 @@ export default function EmployeeDashboard() {
                                         <p>{r.comments}</p>
                                     </div>
                                 ))
+                            )}
+                        </InfoCard>
+                    )}
+                    {section === "leaves" && (
+                        <InfoCard title="🏖 Solicitudes de ausencia">
+                            {employeeData.leaveRequests.length === 0 ? (
+                                <p>No hay solicitudes registradas</p>
+                            ) : (
+                                employeeData.leaveRequests.map((l) => {
+                                    const statusEmoji =
+                                        l.status === "APPROVED"
+                                            ? "🟢"
+                                            : l.status === "PENDING"
+                                                ? "🟡"
+                                                : "🔴";
+
+                                    return (
+                                        <div key={l.id} className="list-card">
+                                            <strong>
+                                                {statusEmoji} {l.type}
+                                            </strong>
+                                            <p>
+                                                {l.startDate} → {l.endDate}
+                                            </p>
+                                            <p>Estado: {l.status}</p>
+                                            {l.comments && <p>{l.comments}</p>}
+                                        </div>
+                                    );
+                                })
                             )}
                         </InfoCard>
                     )}

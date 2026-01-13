@@ -29,9 +29,15 @@
       "id": 1,
       "employeeId": 1,
       "employeeName": "Manuel Quijada",
-      "projectId": 5,
-      "projectCode": "PRJ005",
-      "projectName": "Migración Cloud",
+      "project": {
+        "id": 5,
+        "code": "PRJ005",
+        "name": "Migración Cloud",
+        "startDate": "2024-05-20",
+        "endDate": null,
+        "client": "IBM",
+        "ubication": "MADRID"
+      },
       "jobPosition": "Backend Developer",
       "startDate": "2024-01-10",
       "endDate": null
