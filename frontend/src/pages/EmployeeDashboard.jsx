@@ -5,116 +5,127 @@ import ThemeSwitch from "../components/ThemeSwitch.jsx";
 import "../styles/EmployeeDashboard.css";
 import mockData from "../mocks/employeeFullMock.json";
 
+import dockerIcon from "../assets/dockerIcon.png";
+import javaIcon from "../assets/javaIcon.png";
+import kubernetesIcon from "../assets/kubernetesIcon.png";
+import pythonIcon from "../assets/pythonIcon.png";
+import reactIcon from "../assets/reactIcon.png";
+import springIcon from "../assets/springIcon.png";
+import sqlIcon from "../assets/sqlIcon.png";
+
+
 export default function EmployeeDashboard() {
     const [employeeData, setEmployeeData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState("profile");
 
     const token = localStorage.getItem("token");
-    // const url = `${import.meta.env.VITE_API_BASE_URL}/api/employees/me/full`;
-    //
-    // useEffect(() => {
-    //     fetch(url, { headers: { Authorization: Bearer ${token} } })
-    //         .then(res => { if (!res.ok) throw new Error("Error al cargar datos");
-    //             return res.json(); })
-    //         .then(data => {
-    //             const normalizedData = {
-    //                 employee: {
-    //                     id: data.employee.id,
-    //                     name: data.employee.name,
-    //                     email: data.employee.email,
-    //                     location: data.employee.location,
-    //                     hireDate: data.employee.hireDate,
-    //                     department: { id: data.employee.departmentId,
-    //                         name: data.employee.departmentName },
-    //                     jobPosition: { id: data.employee.jobPositionId,
-    //                         title: data.employee.jobPositionTitle }
-    //                 },
-    //                 skills: data.skills.map(s => ({
-    //                     id: s.id,
-    //                     skillId: s.skillId,
-    //                     name: s.skillName,
-    //                     level: s.level })),
-    //                 assignments: data.assignments.map(a => ({
-    //                     id: a.id,
-    //                     projectId: a.projectId,
-    //                     projectCode: a.projectCode,
-    //                     projectName: a.projectName,
-    //                     jobPosition: a.jobPosition,
-    //                     startDate: a.startDate,
-    //                     endDate: a.endDate })),
-    //                 contracts: data.contracts.map(c => ({
-    //                     id: c.id,
-    //                     type: c.type,
-    //                     startDate: c.startDate,
-    //                     endDate: c.endDate,
-    //                     weeklyHours: c.weeklyHours })),
-    //                 compensations: data.compensations.map(c => ({
-    //                     id: c.id,
-    //                     baseSalary: c.baseSalary,
-    //                     bonus: c.bonus,
-    //                     effectiveFrom: c.effectiveFrom })),
-    //                 reviews: data.performanceReviews.map(r => ({
-    //                     id: r.id,
-    //                     date: r.reviewDate,
-    //                     rating: r.rating,
-    //                     comments: r.comments })),
-    //                 leaveRequests: data.leaveRequests.map(l => ({
-    //                     id: l.id,
-    //                     type: l.type,
-    //                     status: l.status,
-    //                     startDate: l.startDate,
-    //                     endDate: l.endDate,
-    //                     comments: l.comments })) };
-    //             setEmployeeData(normalizedData); }) .catch(err => console.error(err)) .finally(() => setLoading(false)); }, [token]);
+    const url = `${import.meta.env.VITE_API_BASE_URL}/api/employees/me/full`;
+
+    const skillIconMap = {
+        Java: javaIcon,
+        "Spring Boot": springIcon,
+        React: reactIcon,
+        Docker: dockerIcon,
+        Kubernetes: kubernetesIcon,
+        Python: pythonIcon,
+        SQL: sqlIcon,
+    };
 
     useEffect(() => {
-        setTimeout(() => {
-            const normalizedData = {
-                employee: {
-                    id: mockData.employee.id,
-                    name: mockData.employee.name,
-                    email: mockData.employee.email,
-                    location: mockData.employee.location,
-                    hireDate: mockData.employee.hireDate,
-                    department: { name: mockData.employee.departmentName },
-                    jobPosition: { title: mockData.employee.jobPositionTitle },
-                },
-                skills: mockData.skills,
-                assignments: mockData.assignments.map(a => ({
-                    id: a.id,
-                    jobPosition: a.jobPosition,
-                    startDate: a.startDate,
-                    endDate: a.endDate,
-                    project: {
-                        id: a.project.id,
-                        code: a.project.code,
-                        name: a.project.name,
-                        client: a.project.client,
-                        ubication: a.project.ubication,
-                        startDate: a.project.startDate,
-                        endDate: a.project.endDate
-                    }
-                })),
-                contracts: mockData.contracts,
-                compensations: mockData.compensations,
-                reviews: mockData.performanceReviews,
-                leaveRequests: mockData.leaveRequests
-            };
-
-            setEmployeeData(normalizedData);
+        if (!token) {
+            setEmployeeData(null);
             setLoading(false);
-        }, 500);
-    }, []);
+            return;
+        }
 
+        setLoading(true);
+
+        fetch(url, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error("Error al cargar datos");
+                return res.json();
+            })
+            .then((data) => {
+                const normalizedData = {
+                    employee: {
+                        id: data.employee.id,
+                        name: data.employee.name,
+                        email: data.employee.email,
+                        location: data.employee.location,
+                        hireDate: data.employee.hireDate,
+                        department: { name: data.employee.departmentName },
+                        jobPosition: { title: data.employee.jobPositionTitle },
+                    },
+                    skills: data.skills,
+                    assignments: data.assignments,
+                    contracts: data.contracts,
+                    compensations: data.compensations,
+                    reviews: data.performanceReviews,
+                    leaveRequests: data.leaveRequests,
+                };
+
+                setEmployeeData(normalizedData);
+            })
+            .catch((err) => {
+                console.error(err);
+                setEmployeeData(null);
+            })
+            .finally(() => setLoading(false));
+    }, [token, url]);
+
+    const handleLogout = () => {
+        localStorage.clear();
+        setEmployeeData(null);
+        window.location.href = "/";
+    };
 
     if (loading) return <p>Cargando...</p>;
     if (!employeeData) return <p>Error al cargar datos</p>;
 
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        window.location.href = "/";
-    };
+    // useEffect(() => {
+    //     setTimeout(() => {
+    //         const normalizedData = {
+    //             employee: {
+    //                 id: mockData.employee.id,
+    //                 name: mockData.employee.name,
+    //                 email: mockData.employee.email,
+    //                 location: mockData.employee.location,
+    //                 hireDate: mockData.employee.hireDate,
+    //                 department: { name: mockData.employee.departmentName },
+    //                 jobPosition: { title: mockData.employee.jobPositionTitle },
+    //             },
+    //             skills: mockData.skills,
+    //             assignments: mockData.assignments.map(a => ({
+    //                 id: a.id,
+    //                 jobPosition: a.jobPosition,
+    //                 startDate: a.startDate,
+    //                 endDate: a.endDate,
+    //                 project: {
+    //                     id: a.project.id,
+    //                     code: a.project.code,
+    //                     name: a.project.name,
+    //                     client: a.project.client,
+    //                     ubication: a.project.ubication,
+    //                     startDate: a.project.startDate,
+    //                     endDate: a.project.endDate
+    //                 }
+    //             })),
+    //             contracts: mockData.contracts,
+    //             compensations: mockData.compensations,
+    //             reviews: mockData.performanceReviews,
+    //             leaveRequests: mockData.leaveRequests
+    //         };
+    //
+    //         setEmployeeData(normalizedData);
+    //         setLoading(false);
+    //     }, 500);
+    // }, []);
+
 
     return (
         <div className="dashboard-container">
@@ -143,7 +154,7 @@ export default function EmployeeDashboard() {
                             contract: "💼 Contrato",
                             salary: "💰 Compensación",
                             reviews: "⭐ Evaluaciones de desempeño",
-                            leaves: "🏖 Ausencias",
+                            leaves: "🏖 Solicitudes de ausencia",
                         };
                         return (
                             <button
@@ -175,9 +186,19 @@ export default function EmployeeDashboard() {
                         <InfoCard title="🛠 Skills">
                             {employeeData.skills.map((s) => (
                                 <div key={s.id} className="skill-row">
-                                    <span>{s.skillName}</span>
+                                    <span className="skill-name">{s.skillName}</span>
+
                                     <progress max="5" value={s.level} />
-                                    <span>{s.level}/5</span>
+
+                                    <span className="skill-level">{s.level}/5</span>
+
+                                    {skillIconMap[s.skillName] && (
+                                        <img
+                                            src={skillIconMap[s.skillName]}
+                                            alt={s.skillName}
+                                            className="skill-icon"
+                                        />
+                                    )}
                                 </div>
                             ))}
                         </InfoCard>

@@ -342,3 +342,16 @@
     color: #ffffff !important;
     background: var(--input-selection-bg) !important;
 }
+
+.skill-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto auto;
+    align-items: center;
+    gap: 1rem;
+}
+
+.skill-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}

@@ -100,8 +100,8 @@ INSERT INTO projects (code, name, start_date, client, ubication) VALUES
                                                                      ('PRJ001', 'Sistema RRHH', '2024-01-10', 'SMARTHR', 'MADRID'),
                                                                      ('PRJ002', 'Portal Web Corporativo', '2023-11-01', 'NIKE', 'REMOTE'),
                                                                      ('PRJ003', 'Migración Cloud', '2024-02-15', 'ACCENTURE', 'BARCELONA'),
-                                                                     ('PRJ004', 'Migración Cloud', '2024-02-18', 'SALESFORCE', 'MADRID'),
-                                                                     ('PRJ005', 'Migración Cloud', '2024-05-20', 'IBM', 'MADRID'),
+                                                                     ('PRJ004', 'Optimizacion de procesos', '2024-02-18', 'SALESFORCE', 'MADRID'),
+                                                                     ('PRJ005', 'Desarrollo APIs', '2024-05-20', 'IBM', 'MADRID'),
                                                                      ('PRJ006', 'Migración Cloud', '2024-08-15', 'MICROSOFT', 'REMOTE')
     ON CONFLICT (code) DO NOTHING;
 
@@ -149,38 +149,57 @@ VALUES (
        )
     ON CONFLICT (employee_id, project_id) DO NOTHING;
 
+INSERT INTO assignments (employee_id, project_id, job_position_id, start_date)
+VALUES (
+           (SELECT id FROM employees WHERE email='alfonso@smarthr.dev'),
+           (SELECT id FROM projects WHERE code='PRJ004'),
+           (SELECT id FROM job_positions WHERE title='RRHH Manager'),
+           '2024-01-10'
+       )
+    ON CONFLICT (employee_id, project_id) DO NOTHING;
+
 
 -- =====================
 -- EMPLOYEE SKILLS
 -- =====================
 -- Manuel
 INSERT INTO employee_skills (employee_id, skill_id, level)
-SELECT e.id, s.id, 5 FROM employees e, skills s
-WHERE e.email='manuel@smarthr.dev' AND s.name IN ('Java','Spring Boot','Docker')
+SELECT e.id, s.id, 5
+FROM employees e
+         JOIN skills s ON s.name IN ('Java','Spring Boot','Docker','Kubernetes','SQL','Python')
+WHERE e.email='manuel@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
 -- Julene
 INSERT INTO employee_skills (employee_id, skill_id, level)
-SELECT e.id, s.id, 4 FROM employees e, skills s
-WHERE e.email='julene@smarthr.dev' AND s.name IN ('React','Docker')
+SELECT e.id, s.id, 5
+FROM employees e
+         JOIN skills s ON s.name IN ('Docker','React')
+WHERE e.email='mjulene@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
 -- Alfonso
 INSERT INTO employee_skills (employee_id, skill_id, level)
-SELECT e.id, s.id, 5 FROM employees e, skills s
-WHERE e.email='alfonso@smarthr.dev' AND s.name IN ('Python','SQL','Kubernetes')
+SELECT e.id, s.id, 5
+FROM employees e
+         JOIN skills s ON s.name IN ('Python','SQL','Kubernetes')
+WHERE e.email='alfonso@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
 -- Laura
 INSERT INTO employee_skills (employee_id, skill_id, level)
-SELECT e.id, s.id, 4 FROM employees e, skills s
-WHERE e.email='laura@smarthr.dev' AND s.name IN ('Docker','Kubernetes')
+SELECT e.id, s.id, 5
+FROM employees e
+         JOIN skills s ON s.name IN ('Docker','Kubernetes')
+WHERE e.email='laura@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
 -- Carlos
 INSERT INTO employee_skills (employee_id, skill_id, level)
-SELECT e.id, s.id, 3 FROM employees e, skills s
-WHERE e.email='carlos@smarthr.dev' AND s.name IN ('Java','SQL')
+SELECT e.id, s.id, 5
+FROM employees e
+         JOIN skills s ON s.name IN ('Java','SQL')
+WHERE e.email='carlos@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
 -- =====================
@@ -191,8 +210,18 @@ SELECT id, 'PERMANENT', '2024-01-01', 40 FROM employees WHERE email IN ('manuel@
     ON CONFLICT DO NOTHING;
 
 INSERT INTO contracts (employee_id, type, start_date, end_date, weekly_hours)
-SELECT id, 'TEMPORARY', '2023-09-15', '2024-09-15', 40 FROM employees WHERE email='julene@smarthr.dev'
+SELECT id, 'TEMPORARY', '2023-09-15', '2024-09-15', 350 FROM employees WHERE email='julene@smarthr.dev'
     ON CONFLICT DO NOTHING;
+
+INSERT INTO contracts (employee_id, type, start_date, weekly_hours)
+SELECT id, 'PERMANENT', '2022-05-01', 40 FROM employees WHERE email IN ('alfonso@smarthr.dev')
+    ON CONFLICT DO NOTHING;
+
+INSERT INTO contracts (employee_id, type, start_date, weekly_hours)
+SELECT id, 'PERMANENT', '2020-03-15', 40 FROM employees WHERE email IN ('carlos@smarthr.dev')
+    ON CONFLICT DO NOTHING;
+
+
 
 -- =====================
 -- COMPENSATIONS
@@ -202,7 +231,19 @@ SELECT id, 3500.00, 500.00, '2024-01-01' FROM employees WHERE email='manuel@smar
     ON CONFLICT DO NOTHING;
 
 INSERT INTO compensations (employee_id, base_salary, bonus, effective_from)
-SELECT id, 2800.00, NULL, '2023-09-15' FROM employees WHERE email='julene@smarthr.dev'
+SELECT id, 2800.00, 200, '2023-09-15' FROM employees WHERE email='julene@smarthr.dev'
+    ON CONFLICT DO NOTHING;
+
+INSERT INTO compensations (employee_id, base_salary, bonus, effective_from)
+SELECT id, 1000.10, 50, '2023-09-15' FROM employees WHERE email='laura@smarthr.dev'
+    ON CONFLICT DO NOTHING;
+
+INSERT INTO compensations (employee_id, base_salary, bonus, effective_from)
+SELECT id, 5000.00, 200, '2023-09-15' FROM employees WHERE email='alfonso@smarthr.dev'
+    ON CONFLICT DO NOTHING;
+
+INSERT INTO compensations (employee_id, base_salary, bonus, effective_from)
+SELECT id, 3200.00, 550, '2023-09-15' FROM employees WHERE email='carlos@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
 -- =====================
