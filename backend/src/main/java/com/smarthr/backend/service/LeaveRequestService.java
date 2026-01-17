@@ -12,11 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class LeaveRequestService {
+
     private final LeaveRequestRepository repo;
     private final EmployeeRepository employeeRepo;
     private final LeaveRequestMapper mapper;
@@ -40,6 +42,13 @@ public class LeaveRequestService {
     public List<LeaveRequestDto> listByEmployee(Long employeeId) {
         return repo.findByEmployeeId(employeeId)
                 .stream().map(mapper::toDto).toList();
+    }
+
+    public List<LeaveRequestDto> getPendingRequests() {
+        List<LeaveRequest> pending = repo.findByStatus(LeaveRequest.LeaveStatus.PENDING);
+        return pending.stream()
+                .map(mapper::toDto) // Usamos el mapper que ya tienes
+                .collect(Collectors.toList());
     }
 
 }

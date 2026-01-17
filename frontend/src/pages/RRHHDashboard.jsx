@@ -24,8 +24,6 @@ const skillIconMap = {
     SQL: sqlIcon,
 };
 
-
-
 export default function RRHHDashboard() {
     const [me, setMe] = useState({ name: "", jobPositionTitle: "" });
     const [employeeData, setEmployeeData] = useState(null);
@@ -34,15 +32,15 @@ export default function RRHHDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    const [projectResults, setProjectResults] = useState(null);
+    const [pendingLeaves, setPendingLeaves] = useState(null);
+
     const token = localStorage.getItem("token");
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
-    const [projectInput, setProjectInput] = useState("");
-    const [projectResults, setProjectResults] = useState(null);
-
     /* ==========================
        Usuario logueado (EmployeeCard)
-       ========================== */
+    ========================== */
     useEffect(() => {
         if (!token) return;
 
@@ -66,12 +64,14 @@ export default function RRHHDashboard() {
     };
 
     /* ==========================
-          Buscar empleado
-          ========================== */
+       Buscar empleado
+    ========================== */
     const handleEmployeeSearch = async (e) => {
         if (e.key !== "Enter" || !usernameInput.trim()) return;
 
         setLoading(true);
+        setProjectResults(null);
+        setPendingLeaves(null);
 
         try {
             const res = await fetch(
@@ -80,7 +80,6 @@ export default function RRHHDashboard() {
             );
 
             if (!res.ok) {
-                // 👇 empleado no encontrado → no hacemos nada
                 setEmployeeData(null);
                 return;
             }
@@ -96,25 +95,19 @@ export default function RRHHDashboard() {
         }
     };
 
-
     /* ==========================
        Buscar proyecto
-       ========================== */
+    ========================== */
     const handleProjectSearch = async () => {
         setError("");
         setLoading(true);
         setEmployeeData(null);
-        setProjectResults(null);
+        setPendingLeaves(null);
 
         try {
-            const res = await fetch(
-                `${baseUrl}/api/projects`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            const res = await fetch(`${baseUrl}/api/projects`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
             if (!res.ok) throw new Error("Error al cargar proyectos");
 
@@ -129,10 +122,35 @@ export default function RRHHDashboard() {
         }
     };
 
+    /* ==========================
+       Cargar ausencias pendientes
+    ========================== */
+    const handlePendingLeaves = async () => {
+        setError("");
+        setLoading(true);
+        setEmployeeData(null);
+        setProjectResults(null);
+
+        try {
+            const res = await fetch(`${baseUrl}/api/leave-requests/pending`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!res.ok) throw new Error("Error al cargar las ausencias pendientes");
+
+            const data = await res.json();
+            setPendingLeaves(data);
+        } catch (err) {
+            console.error(err);
+            setError("No se pudieron cargar las ausencias pendientes");
+            setPendingLeaves([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (loading) return <Loader />;
     if (error) return <p style={{ padding: "1rem" }}>{error}</p>;
-
 
     return (
         <div className="rrhh-container">
@@ -151,6 +169,7 @@ export default function RRHHDashboard() {
             {/* Sidebar */}
             <aside className="rrhh-sidebar">
                 <div className="rrhh-search-row">
+                    {/* Input de empleado */}
                     <input
                         className="rrhh-search-input"
                         placeholder="Buscar empleado (username)"
@@ -159,6 +178,15 @@ export default function RRHHDashboard() {
                         onKeyDown={handleEmployeeSearch}
                     />
 
+                    {/* Botones a la derecha */}
+                    <div className="rrhh-actions">
+                        <button>Nuevo Empleado</button>
+                        <button className="rrhh-action-btn" onClick={handlePendingLeaves}>
+                            Ausencias Pendientes
+                        </button>
+                    </div>
+
+                    {/* Botón de Proyectos */}
                     <div className="rrhh-project-button">
                         <button
                             className="rrhh-project-button__btn"
@@ -171,55 +199,52 @@ export default function RRHHDashboard() {
                                 <div className="rrhh-project-button__folder rrhh-project-button__folder--three"></div>
                                 <div className="rrhh-project-button__folder rrhh-project-button__folder--four"></div>
                             </div>
-
                             <div className="rrhh-project-button__active-line"></div>
                             <span className="rrhh-project-button__text">Proyectos</span>
                         </button>
-
-                        {/* Nuevo empleado */}
-                        <button className="rrhh-action-btn">
-                            Nuevo Empleado
-                        </button>
-
-                        {/* Ausencias pendientes */}
-                        <button className="rrhh-action-btn">
-                            Ausencias Pendientes
-                        </button>
-
                     </div>
                 </div>
 
+                {/* Secciones del empleado */}
                 {employeeData && (
                     <div className="input">
-                        {["profile", "skills", "projects", "contract", "salary", "reviews", "leaves"].map(
-                            (sec) => (
-                                <button
-                                    key={sec}
-                                    className={`value ${section === sec ? "active" : ""}`}
-                                    onClick={() => setSection(sec)}
-                                >
-                                    {{
-                                        profile: "👤 Perfil",
-                                        skills: "🛠 Skills",
-                                        projects: "📁 Proyectos",
-                                        contract: "💼 Contrato",
-                                        salary: "💰 Compensación",
-                                        reviews: "⭐ Evaluaciones",
-                                        leaves: "🏖 Ausencias",
-                                    }[sec]}
-                                </button>
-                            )
-                        )}
+                        {[
+                            "profile",
+                            "skills",
+                            "projects",
+                            "contract",
+                            "salary",
+                            "reviews",
+                            "leaves",
+                        ].map((sec) => (
+                            <button
+                                key={sec}
+                                className={`value ${section === sec ? "active" : ""}`}
+                                onClick={() => setSection(sec)}
+                            >
+                                {{
+                                    profile: "👤 Perfil",
+                                    skills: "🛠 Skills",
+                                    projects: "📁 Proyectos",
+                                    contract: "💼 Contrato",
+                                    salary: "💰 Compensación",
+                                    reviews: "⭐ Evaluaciones",
+                                    leaves: "🏖 Ausencias",
+                                }[sec]}
+                            </button>
+                        ))}
                     </div>
                 )}
             </aside>
 
             {/* Main content */}
             <main className="rrhh-main-content">
+                {/* Perfil de empleado */}
                 {employeeData && (
                     <DashboardSections employeeData={employeeData} section={section} />
                 )}
 
+                {/* Resultados de proyectos */}
                 {!employeeData && projectResults && (
                     <InfoCard title="📁 Resultados de proyectos">
                         {projectResults.length === 0 ? (
@@ -240,20 +265,109 @@ export default function RRHHDashboard() {
                     </InfoCard>
                 )}
 
-                {!employeeData && !projectResults && <p></p>}
+                {/* Ausencias pendientes */}
+                {!employeeData && pendingLeaves && (
+                    <InfoCard title="🏖 Ausencias Pendientes">
+                        {pendingLeaves.length === 0 ? (
+                            <p>No hay solicitudes pendientes</p>
+                        ) : (
+                            pendingLeaves.map((l) => (
+                                <div key={l.id} className="list-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div>
+                                        <strong>
+                                            {l.status === "PENDING"
+                                                ? "🟡"
+                                                : l.status === "APPROVED"
+                                                    ? "🟢"
+                                                    : "🔴"}{" "}
+                                            {l.type}
+                                        </strong>
+                                        <p>Empleado: {l.employeeName}</p>
+                                        <p>
+                                            {l.startDate} → {l.endDate}
+                                        </p>
+                                        {l.comments && <p>{l.comments}</p>}
+                                    </div>
+
+                                    {/* Botones Aprobar / Denegar */}
+                                    <div className="like-unlike-radio">
+                                        <div>
+                                            <input
+                                                name={`feedback-${l.id}`}
+                                                value="approve"
+                                                id={`approve-${l.id}`}
+                                                className="custom-radio-fb"
+                                                type="radio"
+                                                onChange={() => handleLeaveDecision(l.id, "APPROVED")}
+                                            />
+                                            <label htmlFor={`approve-${l.id}`} className="feedback-label">
+                                                <svg
+                                                    className="icon"
+                                                    width="27"
+                                                    height="27"
+                                                    viewBox="0 0 27 27"
+                                                    fill="currentColor"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                >
+                                                    <path
+                                                        fillRule="evenodd"
+                                                        clipRule="evenodd"
+                                                        d="M0.7229 26.5H5.92292V10.9008H0.7229V26.5ZM26.6299 15.2618L24.372 23.7566C23.9989 25.3696 22.5621 26.5 20.9072 26.5H8.52293V10.9278L10.7573 2.87293C10.9669 1.50799 12.1418 0.5 13.524 0.5C15.0699 0.5 16.323 1.7527 16.323 3.29837V10.8998H23.1651C25.4519 10.9009 27.1453 13.0335 26.6299 15.2618Z"
+                                                        fill="currentColor"
+                                                    ></path>
+                                                </svg>
+                                                Aprobar
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <input
+                                                name={`feedback-${l.id}`}
+                                                value="deny"
+                                                id={`deny-${l.id}`}
+                                                className="custom-radio-fb"
+                                                type="radio"
+                                                onChange={() => handleLeaveDecision(l.id, "REJECTED")}
+                                            />
+                                            <label htmlFor={`deny-${l.id}`} className="feedback-label">
+                                                <svg
+                                                    className="icon"
+                                                    width="27"
+                                                    height="27"
+                                                    viewBox="0 0 27 27"
+                                                    fill="currentColor"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                >
+                                                    <path
+                                                        fillRule="evenodd"
+                                                        clipRule="evenodd"
+                                                        d="M26.7229 0.5L21.5229 0.5L21.5229 16.0992L26.7229 16.0992L26.7229 0.5ZM0.815853 11.7382L3.07376 3.24339C3.44687 1.63037 4.88372 0.500027 6.53861 0.500027L18.9229 0.500028L18.9229 16.0722L16.6885 24.1271C16.4789 25.492 15.304 26.5 13.9218 26.5C12.3759 26.5 11.1228 25.2473 11.1228 23.7016L11.1228 16.1002L4.28068 16.1002C1.99391 16.0991 0.300502 13.9664 0.815853 11.7382Z"
+                                                        fill="currentColor"
+                                                    ></path>
+                                                </svg>
+                                                Denegar
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </InfoCard>
+                )}
+
+                {/* Estado vacío */}
+                {!employeeData && !projectResults && !pendingLeaves && <p></p>}
             </main>
         </div>
     );
 }
 
 /* ======================================================
-   Secciones del empleado (idénticas a EmployeeDashboard)
-   ====================================================== */
+   Secciones del empleado
+====================================================== */
 function DashboardSections({ employeeData, section }) {
     return (
         <div className="dashboard-layout">
             <div className="dashboard-content">
-
                 {section === "profile" && (
                     <InfoCard title="📄 Información Personal">
                         <div className="grid">
@@ -288,7 +402,9 @@ function DashboardSections({ employeeData, section }) {
                             <div key={a.id} className="list-card">
                                 <strong>{a.project.name}</strong>
                                 <p>{a.project.client}</p>
-                                <p>{a.startDate} → {a.endDate ?? "Actual"}</p>
+                                <p>
+                                    {a.startDate} → {a.endDate ?? "Actual"}
+                                </p>
                             </div>
                         ))}
                     </InfoCard>
@@ -357,9 +473,7 @@ function DashboardSections({ employeeData, section }) {
                         )}
                     </InfoCard>
                 )}
-
             </div>
         </div>
     );
-
 }

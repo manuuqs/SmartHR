@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 
 @Tag(name = "Leave Requests", description = "Gestión de solicitudes de ausencia")
@@ -55,6 +56,22 @@ public class LeaveRequestController {
             throw new AccessDeniedException("No tienes permiso para ver otros empleados");
         }
         return ResponseEntity.ok(service.changeStatus(id, status));
+    }
+
+    @Operation(summary = "Lista todas las solicitudes de leave pendientes")
+    @GetMapping("/pending")
+    public ResponseEntity<List<LeaveRequestDto>> getPendingRequests() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        var user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para ver solicitudes pendientes");
+        }
+
+        List<LeaveRequestDto> pendingRequests = service.getPendingRequests();
+        return ResponseEntity.ok(pendingRequests);
     }
 }
 
