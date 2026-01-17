@@ -1,0 +1,49 @@
+
+
+.rrhh-container {
+    position: relative;
+    padding: 1rem;
+    min-height: 100vh;
+    background: transparent;
+}
+
+
+/* EmployeeCard flotante (mismo patrón que en EmployeeDashboard) */
+.employee-card-wrapper {
+    position: fixed;      /* 👈 anclado al viewport */
+    left: 16px;           /* 👈 borde izquierdo REAL */
+    top:25px;
+    z-index: 1000;        /* por encima de todo */
+}
+
+
+
+/* ThemeSwitch arriba a la derecha (el componente ya es fixed) */
+
+.theme-switch-wrapper {
+    position: absolute; /* contenedor referencial; el switch en sí es fixed */
+    top: 0;
+    right: 0;
+}
+
+
+/* Zona central vacía para contenido futuro */
+.rrhh-empty-main {
+    padding-top: 120px; /* hueco para la card flotante */
+    min-height: calc(100vh - 120px);
+    box-sizing: border-box;
+}
+
+/* Responsive: integrar la card en el flujo como ya haces */
+@media (max-width: 768px) {
+    .employee-card-wrapper {
+        position: relative;   /* vuelve al flujo */
+        top: auto;
+        left: auto;
+        right: auto;
+        margin: 0 auto 1rem auto;
+        display: flex;
+        justify-content: center;
+        z-index: auto;
+    }
+}

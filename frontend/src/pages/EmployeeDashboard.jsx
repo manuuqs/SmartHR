@@ -3,6 +3,7 @@ import EmployeeCard from "../components/EmployeeCard";
 import InfoCard from "../components/InfoCard";
 import ThemeSwitch from "../components/ThemeSwitch.jsx";
 import "../styles/EmployeeDashboard.css";
+import Loader from "../components/Loader";
 import mockData from "../mocks/employeeFullMock.json";
 
 import dockerIcon from "../assets/dockerIcon.png";
@@ -84,7 +85,7 @@ export default function EmployeeDashboard() {
         window.location.href = "/";
     };
 
-    if (loading) return <p>Cargando...</p>;
+    if (loading) return <Loader />;
     if (!employeeData) return <p>Error al cargar datos</p>;
 
     // useEffect(() => {
