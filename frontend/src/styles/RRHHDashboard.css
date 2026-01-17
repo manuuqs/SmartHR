@@ -75,6 +75,151 @@
     border-radius: 8px;
 }
 
+/* ===============================
+   BOTÓN PROYECTOS (AISLADO RRHH)
+   =============================== */
+
+.rrhh-project-button {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.rrhh-project-button__btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 5.3em;
+    height: 5.3em;
+    border: none;
+    cursor: pointer;
+    border-radius: 0.4em;
+    background: rgba(235, 252, 254, 0.8);
+}
+
+.rrhh-project-button__container {
+    position: relative;
+    width: 3.5em;
+    height: 3.1em;
+    overflow: hidden;
+}
+
+.rrhh-project-button__folder {
+    position: absolute;
+}
+
+.rrhh-project-button__folder--one {
+    bottom: 0;
+    width: 100%;
+    height: 88%;
+    border-radius: 3px;
+    border-top: 2px solid rgb(206, 167, 39);
+    background: linear-gradient(-35deg, rgb(238, 194, 47) 5%, rgb(255, 223, 118));
+}
+
+.rrhh-project-button__folder--two {
+    top: 5%;
+    width: 38%;
+    height: 19%;
+    border-radius: 3px;
+    background-color: rgb(206, 167, 39);
+    box-shadow: 0 1px 5px -2px rgba(0, 0, 0, 0.5);
+}
+
+.rrhh-project-button__folder--two::before {
+    content: "";
+    position: absolute;
+    left: 88%;
+    border-left: 7px solid rgb(206, 167, 39);
+    border-top: 0.3em solid transparent;
+    border-bottom: 0.3em solid transparent;
+}
+
+.rrhh-project-button__folder--three {
+    left: 0.5em;
+    bottom: 0;
+    width: 2.5em;
+    height: 0.9em;
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(-35deg, rgb(25, 102, 218), rgb(109, 165, 249));
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+}
+
+.rrhh-project-button__folder--four {
+    left: 1em;
+    bottom: 0.3em;
+    width: 1.5em;
+    height: 0.18em;
+    border-radius: 1em;
+    background-color: rgb(20, 77, 163);
+}
+
+.rrhh-project-button__active-line {
+    position: absolute;
+    bottom: 0;
+    width: 0.9em;
+    height: 0.4em;
+    background-color: #999;
+    border-radius: 1em;
+    transition: all 0.15s linear;
+}
+
+.rrhh-project-button__btn:active .rrhh-project-button__active-line,
+.rrhh-project-button__btn:focus .rrhh-project-button__active-line {
+    width: 2.3em;
+    background-color: rgb(41, 126, 255);
+}
+
+.rrhh-project-button__btn:focus .rrhh-project-button__container {
+    animation: rrhh-folder-bounce 1s forwards;
+}
+
+@keyframes rrhh-folder-bounce {
+    20% { transform: scale(0.8); }
+    50% { transform: translateY(-6px); }
+    65% { transform: translateY(4px); }
+    100% { transform: scale(1); }
+}
+
+.rrhh-project-button__text {
+    position: absolute;
+    top: -4.5em;
+    width: 7.7em;
+    height: 2.6em;
+    background-color: #666;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+
+.rrhh-project-button__btn:hover .rrhh-project-button__text {
+    opacity: 1;
+}
+
+.rrhh-search-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* El input ocupa más espacio */
+.rrhh-search-row .rrhh-search-input {
+    flex: 1;
+    max-width: 280px;
+}
+
+/* Botón no se estira */
+.rrhh-project-button {
+    flex-shrink: 0;
+    margin-top: 0;
+}
+
+
 /* Responsive: integrar la EmployeeCard al flujo en móviles */
 @media (max-width: 768px) {
     .employee-card-wrapper {

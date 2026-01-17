@@ -29,15 +29,16 @@ const skillIconMap = {
 export default function RRHHDashboard() {
     const [me, setMe] = useState({ name: "", jobPositionTitle: "" });
     const [employeeData, setEmployeeData] = useState(null);
-    const [projectData, setProjectData] = useState(null);
     const [usernameInput, setUsernameInput] = useState("");
-    const [projectInput, setProjectInput] = useState("");
     const [section, setSection] = useState("profile");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     const token = localStorage.getItem("token");
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+    const [projectInput, setProjectInput] = useState("");
+    const [projectResults, setProjectResults] = useState(null);
 
     /* ==========================
        Usuario logueado (EmployeeCard)
@@ -71,8 +72,6 @@ export default function RRHHDashboard() {
         if (e.key !== "Enter" || !usernameInput.trim()) return;
 
         setLoading(true);
-        setError("");
-        setProjectData(null);
 
         try {
             const res = await fetch(
@@ -80,14 +79,18 @@ export default function RRHHDashboard() {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            if (!res.ok) throw new Error("Empleado no encontrado");
+            if (!res.ok) {
+                // 👇 empleado no encontrado → no hacemos nada
+                setEmployeeData(null);
+                return;
+            }
 
             const data = await res.json();
             setEmployeeData(data);
             setSection("profile");
         } catch (err) {
+            console.error(err);
             setEmployeeData(null);
-            setError(err.message);
         } finally {
             setLoading(false);
         }
@@ -97,30 +100,35 @@ export default function RRHHDashboard() {
     /* ==========================
        Buscar proyecto
        ========================== */
-    const handleProjectSearch = async (e) => {
-        if (e.key !== "Enter" || !projectInput.trim()) return;
-
-        setLoading(true);
+    const handleProjectSearch = async () => {
         setError("");
+        setLoading(true);
         setEmployeeData(null);
+        setProjectResults(null);
 
         try {
             const res = await fetch(
-                `${baseUrl}/api/projects?name=${projectInput}`,
-                { headers: { Authorization: `Bearer ${token}` } }
+                `${baseUrl}/api/projects`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
             );
 
-            if (!res.ok) throw new Error("Proyecto no encontrado");
+            if (!res.ok) throw new Error("Error al cargar proyectos");
 
             const data = await res.json();
-            setProjectData(data);
+            setProjectResults(data.content ?? []);
         } catch (err) {
-            setProjectData([]);
-            setError(err.message);
+            console.error(err);
+            setError("No se pudieron cargar los proyectos");
+            setProjectResults([]);
         } finally {
             setLoading(false);
         }
     };
+
 
     if (loading) return <Loader />;
     if (error) return <p style={{ padding: "1rem" }}>{error}</p>;
@@ -142,21 +150,44 @@ export default function RRHHDashboard() {
 
             {/* Sidebar */}
             <aside className="rrhh-sidebar">
-                <input
-                    className="rrhh-search-input"
-                    placeholder="Buscar empleado (username)"
-                    value={usernameInput}
-                    onChange={(e) => setUsernameInput(e.target.value)}
-                    onKeyDown={handleEmployeeSearch}
-                />
+                <div className="rrhh-search-row">
+                    <input
+                        className="rrhh-search-input"
+                        placeholder="Buscar empleado (username)"
+                        value={usernameInput}
+                        onChange={(e) => setUsernameInput(e.target.value)}
+                        onKeyDown={handleEmployeeSearch}
+                    />
 
-                <input
-                    className="rrhh-search-input"
-                    placeholder="Buscar proyecto"
-                    value={projectInput}
-                    onChange={(e) => setProjectInput(e.target.value)}
-                    onKeyDown={handleProjectSearch}
-                />
+                    <div className="rrhh-project-button">
+                        <button
+                            className="rrhh-project-button__btn"
+                            onClick={handleProjectSearch}
+                            type="button"
+                        >
+                            <div className="rrhh-project-button__container">
+                                <div className="rrhh-project-button__folder rrhh-project-button__folder--one"></div>
+                                <div className="rrhh-project-button__folder rrhh-project-button__folder--two"></div>
+                                <div className="rrhh-project-button__folder rrhh-project-button__folder--three"></div>
+                                <div className="rrhh-project-button__folder rrhh-project-button__folder--four"></div>
+                            </div>
+
+                            <div className="rrhh-project-button__active-line"></div>
+                            <span className="rrhh-project-button__text">Proyectos</span>
+                        </button>
+
+                        {/* Nuevo empleado */}
+                        <button className="rrhh-action-btn">
+                            Nuevo Empleado
+                        </button>
+
+                        {/* Ausencias pendientes */}
+                        <button className="rrhh-action-btn">
+                            Ausencias Pendientes
+                        </button>
+
+                    </div>
+                </div>
 
                 {employeeData && (
                     <div className="input">
@@ -189,26 +220,27 @@ export default function RRHHDashboard() {
                     <DashboardSections employeeData={employeeData} section={section} />
                 )}
 
-                {!employeeData && projectData && (
+                {!employeeData && projectResults && (
                     <InfoCard title="📁 Resultados de proyectos">
-                        {projectData.length === 0 ? (
+                        {projectResults.length === 0 ? (
                             <p>No se encontraron proyectos</p>
                         ) : (
-                            projectData.map((p) => (
+                            projectResults.map((p) => (
                                 <div key={p.id} className="list-card">
                                     <strong>{p.name}</strong>
                                     <p>Código: {p.code}</p>
                                     <p>Cliente: {p.client}</p>
                                     <p>Ubicación: {p.ubication}</p>
+                                    <p>
+                                        {p.startDate} → {p.endDate ?? "Actual"}
+                                    </p>
                                 </div>
                             ))
                         )}
                     </InfoCard>
                 )}
 
-                {!employeeData && !projectData && (
-                    <p></p>
-                )}
+                {!employeeData && !projectResults && <p></p>}
             </main>
         </div>
     );
