@@ -1,6 +1,7 @@
 
 package com.smarthr.backend.web.controllers;
 
+import com.smarthr.backend.domain.Employee;
 import com.smarthr.backend.domain.User;
 import com.smarthr.backend.web.mapper.AssignmentMapper;
 import com.smarthr.backend.web.mapper.EmployeeMapper;
@@ -66,9 +67,11 @@ public class EmployeeController {
             @Parameter(description = "Filtro por rol") @RequestParam(required = false) String role,
             @Parameter(description = "Filtro por ubicación") @RequestParam(required = false) String location,
             @PageableDefault(size = 20) Pageable pageable) {
+        System.out.println("LLamando a list: ");
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        System.out.println("Username: " + username);
 
         // Si no es RRHH denegar acceso
         if (!user.getRoles().contains("ROLE_RRHH")) {
@@ -77,24 +80,19 @@ public class EmployeeController {
         return ResponseEntity.ok(service.list(name, role, location, pageable));
     }
 
-    @Operation(summary = "Obtiene un empleado por ID")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Empleado encontrado",
-                    content = @Content(schema = @Schema(implementation = EmployeeDto.class))),
-            @ApiResponse(responseCode = "404", description = "No encontrado")
-    })
-    @GetMapping("/{id}")
-    public ResponseEntity<EmployeeDto> get(@PathVariable Long id) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
+
+    @Operation(summary = "Recupera la información completa de un empleado por nombre (RRHH o el propio empleado)")
+    @GetMapping("/user")
+    public ResponseEntity<Map<String, Object>> getFullByUsername(@RequestParam String username) {
+        System.out.println("LLamando a getFullByUsername: " + username);
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        System.out.println("Username logueado: " + currentUsername);
 
-        // Si no es RRHH y el ID no coincide con su empleado, denegar
-        if (!user.getRoles().contains("ROLE_RRHH") && !id.equals(user.getEmployee().getId())) {
-            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
-        }
-
-        return ResponseEntity.ok(service.get(id));
+        return ResponseEntity.ok(
+                service.getFullEmployeeByUsername(username, currentUser)
+        );
     }
 
 

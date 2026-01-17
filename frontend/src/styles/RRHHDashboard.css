@@ -28,11 +28,28 @@
 
 
 /* Zona central vacía para contenido futuro */
+/* Contenedor central */
 .rrhh-empty-main {
-    padding-top: 120px; /* hueco para la card flotante */
-    min-height: calc(100vh - 120px);
-    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
 }
+
+/* Input centrado (Uiverse.io) */
+.rrhh-search-input {
+    margin: 0;
+    background: none;
+    border: none;
+    outline: none;
+    max-width: 190px;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 9999px;
+    box-shadow: inset 2px 5px 10px rgb(5, 5, 5);
+    color: var(--text-color);
+}
+
 
 /* Responsive: integrar la card en el flujo como ya haces */
 @media (max-width: 768px) {

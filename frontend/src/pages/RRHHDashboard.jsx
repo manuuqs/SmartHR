@@ -73,7 +73,14 @@ export default function RRHHDashboard() {
             </div>
 
             {/* Lienzo vacío para el contenido futuro del RRHH Dashboard */}
-            <main className="rrhh-empty-main" />
+            <main className="rrhh-empty-main">
+                <input
+                    placeholder="Username"
+                    className="rrhh-search-input"
+                    name="text"
+                    type="text"
+                />
+            </main>
         </div>
     );
 }

@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 /**
  * Repositorio JPA con búsqueda filtrada y paginada.
  */
@@ -13,6 +15,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     Page<Employee> findByNameContainingIgnoreCaseAndJobPosition_TitleContainingIgnoreCaseAndLocationContainingIgnoreCase(
             String name, String jobPosition, String location, Pageable pageable);
+
+    Optional<Employee> findByName(String name);
+
 
 
 }
