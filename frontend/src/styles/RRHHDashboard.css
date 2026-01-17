@@ -1,66 +1,93 @@
-
-
 .rrhh-container {
     position: relative;
     padding: 1rem;
     min-height: 100vh;
     background: transparent;
-}
-
-
-/* EmployeeCard flotante (mismo patrón que en EmployeeDashboard) */
-.employee-card-wrapper {
-    position: fixed;      /* 👈 anclado al viewport */
-    left: 16px;           /* 👈 borde izquierdo REAL */
-    top:25px;
-    z-index: 1000;        /* por encima de todo */
-}
-
-
-
-/* ThemeSwitch arriba a la derecha (el componente ya es fixed) */
-
-.theme-switch-wrapper {
-    position: absolute; /* contenedor referencial; el switch en sí es fixed */
-    top: 0;
-    right: 0;
-}
-
-
-/* Zona central vacía para contenido futuro */
-/* Contenedor central */
-.rrhh-empty-main {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    flex-direction: column;
 }
 
-/* Input centrado (Uiverse.io) */
+/* EmployeeCard flotante */
+.employee-card-wrapper {
+    position: fixed;
+    left: 16px;
+    top: 25px;
+    z-index: 1000;
+}
+
+/* ThemeSwitch arriba a la derecha */
+.theme-switch-wrapper {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1000;
+}
+
+/* Contenedor principal central */
+.rrhh-central {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-left: 260px; /* espacio para EmployeeCard */
+    padding-top: 1rem;
+}
+
+/* Contenedor de inputs arriba */
+.rrhh-inputs {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Inputs estilo Uiverse */
 .rrhh-search-input {
-    margin: 0;
-    background: none;
-    border: none;
-    outline: none;
-    max-width: 190px;
+    flex: 1;
+    max-width: 250px;
     padding: 10px 20px;
     font-size: 16px;
     border-radius: 9999px;
-    box-shadow: inset 2px 5px 10px rgb(5, 5, 5);
+    border: none;
+    outline: none;
+    background: none;
+    box-shadow: inset 2px 5px 10px rgb(5,5,5);
     color: var(--text-color);
 }
 
+/* Contenedor de resultados (Employee o Proyectos) */
+.rrhh-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
 
-/* Responsive: integrar la card en el flujo como ya haces */
+/* Secciones de dashboard */
+.dashboard-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Tarjetas (skills, projects, contracts, etc.) */
+.list-card, .project-results {
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+/* Responsive: integrar la EmployeeCard al flujo en móviles */
 @media (max-width: 768px) {
     .employee-card-wrapper {
-        position: relative;   /* vuelve al flujo */
+        position: relative;
         top: auto;
         left: auto;
-        right: auto;
         margin: 0 auto 1rem auto;
         display: flex;
         justify-content: center;
         z-index: auto;
+    }
+
+    .rrhh-central {
+        margin-left: 0;
     }
 }
