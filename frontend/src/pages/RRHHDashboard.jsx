@@ -159,7 +159,7 @@ export default function RRHHDashboard() {
                 />
 
                 {employeeData && (
-                    <div className="sections-menu">
+                    <div className="input">
                         {["profile", "skills", "projects", "contract", "salary", "reviews", "leaves"].map(
                             (sec) => (
                                 <button
@@ -207,7 +207,7 @@ export default function RRHHDashboard() {
                 )}
 
                 {!employeeData && !projectData && (
-                    <p>Introduce un empleado o proyecto y pulsa Enter</p>
+                    <p></p>
                 )}
             </main>
         </div>
@@ -298,13 +298,31 @@ function DashboardSections({ employeeData, section }) {
 
                 {section === "leaves" && (
                     <InfoCard title="🏖 Ausencias">
-                        {employeeData.leaveRequests.map((l) => (
-                            <div key={l.id} className="list-card">
-                                <strong>{l.type}</strong>
-                                <p>{l.startDate} → {l.endDate}</p>
-                                <p>{l.status}</p>
-                            </div>
-                        ))}
+                        {employeeData.leaveRequests.length === 0 ? (
+                            <p>No hay solicitudes registradas</p>
+                        ) : (
+                            employeeData.leaveRequests.map((l) => {
+                                const statusEmoji =
+                                    l.status === "APPROVED"
+                                        ? "🟢"
+                                        : l.status === "PENDING"
+                                            ? "🟡"
+                                            : "🔴";
+
+                                return (
+                                    <div key={l.id} className="list-card">
+                                        <strong>
+                                            {statusEmoji} {l.type}
+                                        </strong>
+                                        <p>
+                                            {l.startDate} → {l.endDate}
+                                        </p>
+                                        <p>Estado: {l.status}</p>
+                                        {l.comments && <p>{l.comments}</p>}
+                                    </div>
+                                );
+                            })
+                        )}
                     </InfoCard>
                 )}
 
