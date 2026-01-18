@@ -222,23 +222,31 @@
 
 /* Botones estilo Uiverse.io */
 .rrhh-actions button {
-    --hover-shadows: 16px 16px 33px #121212, -16px -16px 33px #303030;
+    --hover-shadows: 16px 16px 33px var(--shadow-dark),
+    -16px -16px 33px var(--shadow-light);
     --accent: fuchsia;
 
     font-weight: bold;
     letter-spacing: 0.1em;
     border: none;
     border-radius: 1.1em;
-    background-color: #212121;
+
+    /* 👇 usar variables del tema */
+    background-color: var(--card-bg);
+    color: var(--text-color);
+
     cursor: pointer;
-    color: white;
     padding: 1em 2em;
+
     transition:
             box-shadow 0.3s ease-in-out,
-            background-color 0.1s ease-in-out,
+            background-color 0.2s ease-in-out,
             letter-spacing 0.1s ease-in-out,
             transform 0.1s ease-in-out;
-    box-shadow: 13px 13px 10px #1c1c1c, -13px -13px 10px #262626;
+
+    box-shadow:
+            13px 13px 10px var(--shadow-dark),
+            -13px -13px 10px var(--shadow-light);
 }
 
 .rrhh-actions button:hover {
@@ -250,6 +258,7 @@
     background-color: var(--accent);
     transform: scale(0.95);
 }
+
 
 /* ------------------ File Explorer Button ------------------ */
 .file-explorer-button {

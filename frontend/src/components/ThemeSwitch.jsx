@@ -2,12 +2,16 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 
 export default function ThemeSwitch() {
-    const [darkMode, setDarkMode] = useState(true);
+    const [darkMode, setDarkMode] = useState(() => {
+        const savedTheme = localStorage.getItem("theme");
+        return savedTheme ? savedTheme === "dark" : true;
+    });
 
     useEffect(() => {
-        document.body.setAttribute("data-theme", darkMode ? "dark" : "light");
+        const theme = darkMode ? "dark" : "light";
+        document.body.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
 
-        // Reemplazar elementos con fondo #213547 en modo claro para asegurar legibilidad
         const replaceFocusBg = (toLight) => {
             try {
                 const root = document.documentElement;
@@ -17,34 +21,28 @@ export default function ThemeSwitch() {
                 els.forEach((el) => {
                     const cs = getComputedStyle(el);
                     const bg = cs.backgroundColor || "";
-                    // Detectar rgb(33, 53, 71) o rgba(33, 53, 71, 1) o presencia del hex en style
-                    const has213547 = (bg === "rgb(33, 53, 71)") || (bg === "rgba(33, 53, 71, 1)") || (el.getAttribute("style") || "").toLowerCase().includes("213547");
-                    if (toLight) {
-                        if (has213547) {
-                            el.style.setProperty("background-color", newBg, "important");
-                            el.style.setProperty("color", newText, "important");
-                            el.setAttribute("data-replaced-bg", "true");
-                        }
-                    } else {
-                        if (el.getAttribute("data-replaced-bg") === "true") {
-                            el.style.removeProperty("background-color");
-                            el.style.removeProperty("color");
-                            el.removeAttribute("data-replaced-bg");
-                        }
+                    const has213547 =
+                        bg === "rgb(33, 53, 71)" ||
+                        bg === "rgba(33, 53, 71, 1)" ||
+                        (el.getAttribute("style") || "").toLowerCase().includes("213547");
+
+                    if (toLight && has213547) {
+                        el.style.setProperty("background-color", newBg, "important");
+                        el.style.setProperty("color", newText, "important");
+                        el.setAttribute("data-replaced-bg", "true");
+                    } else if (!toLight && el.getAttribute("data-replaced-bg") === "true") {
+                        el.style.removeProperty("background-color");
+                        el.style.removeProperty("color");
+                        el.removeAttribute("data-replaced-bg");
                     }
                 });
-            } catch (err) {
-                // fallback silencioso
-                // console.error(err);
-            }
+            } catch {}
         };
 
-        // aplicar reemplazo tras un pequeño delay para que estilos globales apliquen
         setTimeout(() => replaceFocusBg(!darkMode), 100);
-
-        // limpiar al desmontar o cuando cambie
         return () => replaceFocusBg(false);
     }, [darkMode]);
+
 
     return (
         <Wrapper>

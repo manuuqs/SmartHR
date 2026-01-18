@@ -3,7 +3,7 @@ import EmployeeCard from "../components/EmployeeCard";
 import ThemeSwitch from "../components/ThemeSwitch.jsx";
 import Loader from "../components/Loader.jsx";
 import "../styles/RRHHDashboard.css";
-
+import { useNavigate } from "react-router-dom";
 import InfoCard from "../components/InfoCard";
 
 import dockerIcon from "../assets/dockerIcon.png";
@@ -25,6 +25,7 @@ const skillIconMap = {
 };
 
 export default function RRHHDashboard() {
+    const navigate = useNavigate();
     const [me, setMe] = useState({ name: "", jobPositionTitle: "" });
     const [employeeData, setEmployeeData] = useState(null);
     const [usernameInput, setUsernameInput] = useState("");
@@ -221,7 +222,9 @@ export default function RRHHDashboard() {
 
                     {/* Botones a la derecha */}
                     <div className="rrhh-actions">
-                        <button>Nuevo Empleado</button>
+                        <button onClick={() => navigate("/rrhh/new-employee")}>
+                            Nuevo Empleado
+                        </button>
                         <button className="rrhh-action-btn" onClick={handlePendingLeaves}>
                             Ausencias Pendientes
                         </button>
