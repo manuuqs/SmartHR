@@ -90,7 +90,11 @@ export default function RRHHDashboard() {
         } catch (err) {
             console.error(err);
             setEmployeeData(null);
-        } finally {
+            setProjectResults(null);
+            setPendingLeaves(null);
+            setError(""); // o directamente NO usar error
+        }
+        finally {
             setLoading(false);
         }
     };
@@ -115,9 +119,12 @@ export default function RRHHDashboard() {
             setProjectResults(data.content ?? []);
         } catch (err) {
             console.error(err);
-            setError("No se pudieron cargar los proyectos");
-            setProjectResults([]);
-        } finally {
+            setEmployeeData(null);
+            setProjectResults(null);
+            setPendingLeaves(null);
+            setError(""); // o directamente NO usar error
+        }
+        finally {
             setLoading(false);
         }
     };
@@ -142,9 +149,12 @@ export default function RRHHDashboard() {
             setPendingLeaves(data);
         } catch (err) {
             console.error(err);
-            setError("No se pudieron cargar las ausencias pendientes");
-            setPendingLeaves([]);
-        } finally {
+            setEmployeeData(null);
+            setProjectResults(null);
+            setPendingLeaves(null);
+            setError(""); // o directamente NO usar error
+        }
+        finally {
             setLoading(false);
         }
     };
@@ -170,8 +180,12 @@ export default function RRHHDashboard() {
             );
         } catch (err) {
             console.error(err);
-            alert("No se pudo actualizar la solicitud");
+            setEmployeeData(null);
+            setProjectResults(null);
+            setPendingLeaves(null);
+            setError(""); // o directamente NO usar error
         }
+
     }
 
 
