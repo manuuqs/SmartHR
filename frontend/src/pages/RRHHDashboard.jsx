@@ -149,6 +149,33 @@ export default function RRHHDashboard() {
         }
     };
 
+    async function handleLeaveDecision(leaveId, status) {
+        try {
+            const res = await fetch(
+                `${baseUrl}/api/leave-requests/${leaveId}/status?status=${status}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (!res.ok) {
+                throw new Error("Error al actualizar la solicitud");
+            }
+
+            setPendingLeaves((prev) =>
+                prev.filter((l) => l.id !== leaveId)
+            );
+        } catch (err) {
+            console.error(err);
+            alert("No se pudo actualizar la solicitud");
+        }
+    }
+
+
+
     if (loading) return <Loader />;
     if (error) return <p style={{ padding: "1rem" }}>{error}</p>;
 

@@ -47,6 +47,7 @@ public class LeaveRequestController {
     @Operation(summary = "Aprueba o rechaza una solicitud")
     @PatchMapping("/{id}/status")
     public ResponseEntity<LeaveRequestDto> changeStatus(@PathVariable Long id, @RequestParam String status) {
+        System.out.println("Cambio de estado solicitado: " + status);
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));

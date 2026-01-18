@@ -33,9 +33,21 @@ public class LeaveRequestService {
     }
 
     public LeaveRequestDto changeStatus(Long id, String status) {
-        LeaveRequest lr = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Solicitud no existe"));
-        lr.setStatus(LeaveRequest.LeaveStatus.valueOf(status.toUpperCase()));
-        return mapper.toDto(repo.save(lr));
+
+        LeaveRequest.LeaveStatus newStatus;
+        try {
+            newStatus = LeaveRequest.LeaveStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Estado no válido: " + status);
+        }
+
+        LeaveRequest leaveRequest = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con id " + id));
+
+        leaveRequest.setStatus(newStatus);
+
+        LeaveRequest saved = repo.save(leaveRequest);
+        return mapper.toDto(saved);
     }
 
 
