@@ -5,6 +5,7 @@ import com.smarthr.backend.domain.Department;
 import com.smarthr.backend.domain.User;
 import com.smarthr.backend.repository.DepartmentRepository;
 import com.smarthr.backend.repository.UserRepository;
+import com.smarthr.backend.web.dto.DepartmentDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,18 +31,24 @@ public class DepartmentController {
 
     @Operation(summary = "Lista departamentos")
     @GetMapping
-    public ResponseEntity<List<Department>> list() {
-
+    public ResponseEntity<List<DepartmentDto>> list() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Si no es RRHH y el ID no coincide con su empleado, denegar
         if (!user.getRoles().contains("ROLE_RRHH")) {
             throw new AccessDeniedException("No tienes permiso para ver otros empleados");
         }
-        return ResponseEntity.ok(repo.findAll());
+
+        // Convertimos Department a DepartmentDto
+        List<DepartmentDto> dtos = repo.findAll()
+                .stream()
+                .map(d -> new DepartmentDto(d.getId(), d.getName(), d.getDescription()))
+                .toList();
+
+        return ResponseEntity.ok(dtos);
     }
+
 
     @Operation(summary = "Obtiene un departamento por ID")
     @GetMapping("/{id}")

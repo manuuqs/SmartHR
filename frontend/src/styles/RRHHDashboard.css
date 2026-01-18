@@ -375,36 +375,6 @@
     opacity: 1;
 }
 
-/* Botones estilo Uiverse.io para RRHH */
-.rrhh-actions button {
-    --hover-shadows: 16px 16px 33px #121212, -16px -16px 33px #303030;
-    --accent: fuchsia;
-
-    font-weight: bold;
-    letter-spacing: 0.1em;
-    border: none;
-    border-radius: 1.1em;
-    background-color: #212121;
-    cursor: pointer;
-    color: white;
-    padding: 1em 2em;
-    transition:
-            box-shadow 0.3s ease-in-out,
-            background-color 0.1s ease-in-out,
-            letter-spacing 0.1s ease-in-out,
-            transform 0.1s ease-in-out;
-    box-shadow: 13px 13px 10px #1c1c1c, -13px -13px 10px #262626;
-}
-
-.rrhh-actions button:hover {
-    box-shadow: var(--hover-shadows);
-}
-
-.rrhh-actions button:active {
-    box-shadow: var(--hover-shadows), var(--accent) 0px 0px 30px 5px;
-    background-color: var(--accent);
-    transform: scale(0.95);
-}
 
 /* Contenedor para alinear el input + botones horizontalmente */
 .rrhh-search-row {
