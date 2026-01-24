@@ -7,6 +7,7 @@ export default function NewEmployee() {
 
     const [projects, setProjects] = useState([]);
     const [departments, setDepartments] = useState([]);
+    const [skills, setSkills] = useState([]);
 
     const [form, setForm] = useState({
         name: "",
@@ -21,22 +22,39 @@ export default function NewEmployee() {
         weeklyHours: 40,
         projectId: "",
         role: "ROLE_EMPLOYEE",
+        skillIds: [] // Array para skills seleccionadas
     });
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        const { name, value, options, type } = e.target;
+
+        if (type === "select-multiple") {
+            const selected = Array.from(options)
+                .filter(o => o.selected)
+                .map(o => parseInt(o.value));
+            setForm(prev => ({ ...prev, [name]: selected }));
+        } else {
+            setForm(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     useEffect(() => {
         const fetchData = async () => {
             const headers = { Authorization: `Bearer ${token}` };
 
-            const projRes = await fetch(`${baseUrl}/api/projects`, { headers });
-            const deptRes = await fetch(`${baseUrl}/api/departments`, { headers });
+            const [projRes, deptRes, skillsRes] = await Promise.all([
+                fetch(`${baseUrl}/api/projects`, { headers }),
+                fetch(`${baseUrl}/api/departments`, { headers }),
+                fetch(`${baseUrl}/api/skills`, { headers }),
+            ]);
 
-            setProjects((await projRes.json()).content ?? []);
-            setDepartments((await deptRes.json()).content ?? []);
+            const projData = await projRes.json();
+            const deptData = await deptRes.json();
+            const skillsData = await skillsRes.json();
+
+            setProjects(projData.content ?? []); // <-- Aquí usamos content
+            setDepartments(deptData.content ?? deptData);
+            setSkills(skillsData.content ?? skillsData);
         };
 
         fetchData();
@@ -72,13 +90,10 @@ export default function NewEmployee() {
                     <div className="new-employee-grid">
                         <input className="new-employee-input" name="name" placeholder="Nombre" onChange={handleChange} />
                         <input className="new-employee-input" name="surname" placeholder="Apellidos" onChange={handleChange} />
-
                         <input className="new-employee-input" name="email" placeholder="Email" onChange={handleChange} />
                         <input className="new-employee-input" name="username" placeholder="Username" onChange={handleChange} />
-
                         <input className="new-employee-input" type="password" name="password" placeholder="Contraseña" onChange={handleChange} />
                         <input className="new-employee-input" name="location" placeholder="Ubicación" onChange={handleChange} />
-
                         <input className="new-employee-input" type="date" name="hireDate" onChange={handleChange} />
 
                         <select className="new-employee-input" name="departmentId" onChange={handleChange}>
@@ -90,13 +105,26 @@ export default function NewEmployee() {
 
                         <select className="new-employee-input" name="projectId" onChange={handleChange}>
                             <option value="">Proyecto</option>
-                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            {projects.map(p => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name} – {p.client} – {p.ubication}
+                                </option>
+                            ))}
                         </select>
 
                         <select className="new-employee-input" name="role" onChange={handleChange}>
                             <option value="ROLE_EMPLOYEE">Empleado</option>
                             <option value="ROLE_RRHH">RRHH</option>
-                            <option value="ROLE_ADMIN">Admin</option>
+                        </select>
+
+                        {/* Skills múltiples */}
+                        <select
+                            className="new-employee-input"
+                            name="skillIds"
+                            multiple
+                            onChange={handleChange}
+                        >
+                            {skills.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                     </div>
 
