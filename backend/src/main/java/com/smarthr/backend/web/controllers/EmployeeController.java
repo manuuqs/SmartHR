@@ -207,6 +207,33 @@ public class EmployeeController {
         return ResponseEntity.ok(response);
     }
 
+
+    @PostMapping("/complete")
+    @Operation(summary = "Crea empleado completo con contrato, asignación y skills")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Creado", content = @Content(schema = @Schema(implementation = EmployeeDto.class))),
+            @ApiResponse(responseCode = "400", description = "Validación fallida"),
+            @ApiResponse(responseCode = "409", description = "Conflicto - username duplicado")
+    })
+    public ResponseEntity<EmployeeDto> createCompleteEmployee(
+            @Valid @RequestBody NewEmployeeCompleteDto dto) {
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (!currentUser.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("No tienes permiso para crear empleados");
+        }
+
+        Employee employee = service.createCompleteEmployee(dto);
+        EmployeeDto result = mapper.toDto(employee);
+
+        return ResponseEntity.created(URI.create("/api/employees/" + employee.getId()))
+                .body(result);
+    }
+
+
 }
 
 

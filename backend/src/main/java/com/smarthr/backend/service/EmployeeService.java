@@ -1,14 +1,12 @@
 
 package com.smarthr.backend.service;
 
-import com.smarthr.backend.domain.Employee;
-import com.smarthr.backend.domain.User;
-import com.smarthr.backend.repository.AssignmentRepository;
-import com.smarthr.backend.repository.EmployeeSkillRepository;
-import com.smarthr.backend.repository.UserRepository;
+import com.smarthr.backend.domain.*;
+import com.smarthr.backend.repository.*;
+import com.smarthr.backend.web.dto.ContractTypeDto;
+import com.smarthr.backend.web.dto.NewEmployeeCompleteDto;
 import com.smarthr.backend.web.mapper.AssignmentMapper;
 import com.smarthr.backend.web.mapper.EmployeeMapper;
-import com.smarthr.backend.repository.EmployeeRepository;
 import com.smarthr.backend.web.exceptions.ResourceNotFoundException;
 import com.smarthr.backend.web.dto.EmployeeDto;
 import com.smarthr.backend.web.mapper.EmployeeSkillMapper;
@@ -16,11 +14,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.smarthr.backend.web.dto.ContractTypeDto.*;
 
 /**
  * Servicio de negocio para Employee.
@@ -48,6 +49,14 @@ public class EmployeeService {
     private final PerformanceReviewService performanceReviewService;
     private final LeaveRequestService leaveRequestService;
     private final UserRepository userRepository;
+
+    private final DepartmentRepository departmentRepository;
+    private final JobPositionRepository jobPositionRepository;
+    private final ContractRepository contractRepository;
+    private final ProjectRepository projectRepository;
+    private final SkillRepository skillRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public Page<EmployeeDto> list(String name, String jobPosition, String location, Pageable pageable) {
@@ -170,6 +179,93 @@ public class EmployeeService {
         }
         repository.deleteById(id);
     }
+
+    @Transactional
+    public Employee createCompleteEmployee(NewEmployeeCompleteDto dto) {
+
+        // 1. Crear Employee
+        Employee employee = new Employee();
+        employee.setName(dto.getName());
+        employee.setLocation(dto.getLocation());
+        employee.setEmail(dto.getEmail());
+        employee.setHireDate(dto.getHireDate());
+
+        // Department
+        Department dept = departmentRepository.findById(dto.getDepartmentId())
+                .orElseThrow(() -> new RuntimeException("Departamento no encontrado"));
+        employee.setDepartment(dept);
+
+        // JobPosition
+        JobPosition jobPos = jobPositionRepository.findByTitle(dto.getJobPositionTitle())
+                .orElseGet(() -> {
+                    JobPosition jp = new JobPosition();
+                    jp.setTitle(dto.getJobPositionTitle());
+                    return jobPositionRepository.save(jp);
+                });
+        employee.setJobPosition(jobPos);
+
+        employee = repository.save(employee);
+
+        // 2. Crear User
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.getRoles().add(dto.getRole());
+        user.setEmployee(employee);
+        userRepository.save(user);
+
+        // 3. Crear Contract
+        Contract contract = new Contract();
+        contract.setEmployee(employee);
+        contract.setType(Contract.ContractType.valueOf(dto.getContractType().name()));
+        contract.setStartDate(dto.getContractStartDate());
+        contract.setEndDate(dto.getContractEndDate());
+        contract.setWeeklyHours(dto.getWeeklyHours());
+        contractRepository.save(contract);
+
+        // 4. Crear Assignment (si hay proyecto)
+        if (dto.getProjectId() != null) {
+            Project project = projectRepository.findById(dto.getProjectId())
+                    .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+
+            JobPosition assignmentJobPos = jobPositionRepository.findByTitle(
+                    dto.getAssignmentJobPosition() != null ?
+                            dto.getAssignmentJobPosition() : dto.getJobPositionTitle()
+            ).orElseGet(() -> {
+                JobPosition jp = new JobPosition();
+                jp.setTitle(dto.getAssignmentJobPosition() != null ?
+                        dto.getAssignmentJobPosition() : dto.getJobPositionTitle());
+                return jobPositionRepository.save(jp);
+            });
+
+            Assignment assignment = new Assignment();
+            assignment.setEmployee(employee);
+            assignment.setProject(project);
+            assignment.setJobPosition(assignmentJobPos);  // ← Ahora SÍ es JobPosition
+            assignment.setStartDate(dto.getContractStartDate());
+            assignment.setEndDate(dto.getContractEndDate());
+            assignmentRepository.save(assignment);
+        }
+
+
+        // 5. Crear EmployeeSkills
+        if (dto.getSkillIds() != null && !dto.getSkillIds().isEmpty()) {
+            for (Long skillId : dto.getSkillIds()) {
+                Skill skill = skillRepository.findById(skillId)
+                        .orElseThrow(() -> new RuntimeException("Skill no encontrada"));
+
+                EmployeeSkill empSkill = new EmployeeSkill();
+                empSkill.setEmployee(employee);
+                empSkill.setSkill(skill);
+                empSkill.setLevel(3); // Nivel por defecto
+                employeeSkillRepository.save(empSkill);
+            }
+        }
+
+        return employee;
+    }
+
+
 }
 
 

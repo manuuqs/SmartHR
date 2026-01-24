@@ -22,7 +22,15 @@ export default function NewEmployee() {
         weeklyHours: 40,
         projectId: "",
         role: "ROLE_EMPLOYEE",
-        skillIds: [] // Array para skills seleccionadas
+        skillIds: [],
+
+        // Contrato
+        contractType: "PERMANENT",
+        contractStartDate: "",
+        contractEndDate: "",
+
+        // Asignación (solo puesto; fechas = contrato)
+        assignmentJobPosition: ""
     });
 
     const handleChange = (e) => {
@@ -30,11 +38,11 @@ export default function NewEmployee() {
 
         if (type === "select-multiple") {
             const selected = Array.from(options)
-                .filter(o => o.selected)
-                .map(o => parseInt(o.value));
-            setForm(prev => ({ ...prev, [name]: selected }));
+                .filter((o) => o.selected)
+                .map((o) => parseInt(o.value, 10));
+            setForm((prev) => ({ ...prev, [name]: selected }));
         } else {
-            setForm(prev => ({ ...prev, [name]: value }));
+            setForm((prev) => ({ ...prev, [name]: value }));
         }
     };
 
@@ -52,34 +60,66 @@ export default function NewEmployee() {
             const deptData = await deptRes.json();
             const skillsData = await skillsRes.json();
 
-            setProjects(projData.content ?? []); // <-- Aquí usamos content
+            setProjects(projData.content ?? projData);
             setDepartments(deptData.content ?? deptData);
             setSkills(skillsData.content ?? skillsData);
         };
 
         fetchData();
-    }, []);
+    }, [baseUrl, token]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const res = await fetch(`${baseUrl}/api/employees`, {
-            method: "POST",
-            headers: {
+        try {
+            const headers = {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(form),
-        });
+            };
 
-        if (!res.ok) {
-            alert("Error al crear empleado");
-            return;
+            const completeBody = {
+                name: form.name,
+                surname: form.surname,
+                email: form.email,
+                username: form.username,
+                password: form.password,
+                location: form.location,
+                hireDate: form.hireDate,
+                departmentId: parseInt(form.departmentId),
+                jobPositionTitle: form.jobPositionTitle,
+                role: form.role,
+                weeklyHours: form.weeklyHours,
+
+                contractType: form.contractType,
+                contractStartDate: form.contractStartDate,
+                contractEndDate: form.contractEndDate || null,
+
+                projectId: form.projectId ? parseInt(form.projectId) : null,
+                assignmentJobPosition: form.assignmentJobPosition || null,
+
+                skillIds: form.skillIds
+            };
+
+            const res = await fetch(`${baseUrl}/api/employees/complete`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(completeBody),
+            });
+
+            if (!res.ok) {
+                const error = await res.text();
+                alert(`Error: ${error}`);
+                return;
+            }
+
+            alert("Empleado creado completamente");
+            window.location.href = "/rrhh";
+        } catch (err) {
+            console.error(err);
+            alert("Error de conexión");
         }
-
-        alert("Empleado creado correctamente");
-        window.location.href = "/rrhh";
     };
+
 
     return (
         <div className="new-employee-container">
@@ -88,33 +128,137 @@ export default function NewEmployee() {
                     <h2 className="new-employee-title">Nuevo Empleado</h2>
 
                     <div className="new-employee-grid">
-                        <input className="new-employee-input" name="name" placeholder="Nombre" onChange={handleChange} />
-                        <input className="new-employee-input" name="surname" placeholder="Apellidos" onChange={handleChange} />
-                        <input className="new-employee-input" name="email" placeholder="Email" onChange={handleChange} />
-                        <input className="new-employee-input" name="username" placeholder="Username" onChange={handleChange} />
-                        <input className="new-employee-input" type="password" name="password" placeholder="Contraseña" onChange={handleChange} />
-                        <input className="new-employee-input" name="location" placeholder="Ubicación" onChange={handleChange} />
-                        <input className="new-employee-input" type="date" name="hireDate" onChange={handleChange} />
+                        <input
+                            className="new-employee-input"
+                            name="name"
+                            placeholder="Nombre"
+                            onChange={handleChange}
+                        />
+                        <input
+                            className="new-employee-input"
+                            name="surname"
+                            placeholder="Apellidos"
+                            onChange={handleChange}
+                        />
+                        <input
+                            className="new-employee-input"
+                            name="email"
+                            placeholder="Email"
+                            onChange={handleChange}
+                        />
+                        <input
+                            className="new-employee-input"
+                            name="username"
+                            placeholder="Username"
+                            onChange={handleChange}
+                        />
+                        <input
+                            className="new-employee-input"
+                            type="password"
+                            name="password"
+                            placeholder="Contraseña"
+                            onChange={handleChange}
+                        />
+                        <input
+                            className="new-employee-input"
+                            name="location"
+                            placeholder="Ubicación"
+                            onChange={handleChange}
+                        />
 
-                        <select className="new-employee-input" name="departmentId" onChange={handleChange}>
+                        {/* Fechas claras */}
+                        <div className="new-employee-field">
+                            <label>Fecha de alta del empleado</label>
+                            <input
+                                className="new-employee-input"
+                                type="date"
+                                name="hireDate"
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        <div className="new-employee-field">
+                            <label>Inicio del contrato (y de la asignación)</label>
+                            <input
+                                className="new-employee-input"
+                                type="date"
+                                name="contractStartDate"
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        <div className="new-employee-field">
+                            <label>Fin del contrato (y de la asignación, opcional)</label>
+                            <input
+                                className="new-employee-input"
+                                type="date"
+                                name="contractEndDate"
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        <select
+                            className="new-employee-input"
+                            name="departmentId"
+                            onChange={handleChange}
+                        >
                             <option value="">Departamento</option>
-                            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                            {departments.map((d) => (
+                                <option key={d.id} value={d.id}>
+                                    {d.name}
+                                </option>
+                            ))}
                         </select>
 
-                        <input className="new-employee-input" name="jobPositionTitle" placeholder="Puesto" onChange={handleChange} />
+                        <input
+                            className="new-employee-input"
+                            name="jobPositionTitle"
+                            placeholder="Puesto (empleado)"
+                            onChange={handleChange}
+                        />
 
-                        <select className="new-employee-input" name="projectId" onChange={handleChange}>
+                        {/* Puesto en el proyecto (si quieres diferenciarlo) */}
+                        <input
+                            className="new-employee-input"
+                            name="assignmentJobPosition"
+                            placeholder="Puesto en el proyecto (opcional)"
+                            onChange={handleChange}
+                        />
+
+                        <select
+                            className="new-employee-input"
+                            name="projectId"
+                            onChange={handleChange}
+                        >
                             <option value="">Proyecto</option>
-                            {projects.map(p => (
+                            {projects.map((p) => (
                                 <option key={p.id} value={p.id}>
                                     {p.name} – {p.client} – {p.ubication}
                                 </option>
                             ))}
                         </select>
 
-                        <select className="new-employee-input" name="role" onChange={handleChange}>
+                        <select
+                            className="new-employee-input"
+                            name="role"
+                            onChange={handleChange}
+                            value={form.role}
+                        >
                             <option value="ROLE_EMPLOYEE">Empleado</option>
                             <option value="ROLE_RRHH">RRHH</option>
+                        </select>
+
+                        {/* Tipo de contrato */}
+                        <select
+                            className="new-employee-input"
+                            name="contractType"
+                            onChange={handleChange}
+                            value={form.contractType}
+                        >
+                            <option value="PERMANENT">Contrato indefinido</option>
+                            <option value="TEMPORARY">Temporal</option>
+                            <option value="INTERN">Becario</option>
+                            <option value="FREELANCE">Freelance</option>
                         </select>
 
                         {/* Skills múltiples */}
@@ -124,7 +268,11 @@ export default function NewEmployee() {
                             multiple
                             onChange={handleChange}
                         >
-                            {skills.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            {skills.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                    {s.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
