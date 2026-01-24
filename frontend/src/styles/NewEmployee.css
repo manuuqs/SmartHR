@@ -1,15 +1,42 @@
+.new-employee-page {
+    position: relative;
+    min-height: 100vh;
+    padding: 1rem;
+}
+
+/* ThemeSwitch y EmployeeCard fijos */
+.theme-switch-wrapper {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1000;
+}
+
+.employee-card-wrapper {
+    position: fixed;
+    left: 16px;
+    top: 25px;
+    z-index: 1000;
+}
+
+/* ✅ SOLO CAMBIO: Padding para evitar solapamiento, estructura 100% igual */
 .new-employee-container {
     width: 100%;
     min-height: 100vh;
-
     display: flex;
     justify-content: center;
     align-items: flex-start;
 
-    padding: 40px 20px;
+    /* MÍNIMO padding para EmployeeCard + ThemeSwitch */
+    padding-top: 140px;
+    padding-left: 290px;  /* ← SOLO ESTO evita solapamiento */
+    padding-right: 80px;
+    padding-bottom: 40px;
+
     box-sizing: border-box;
 }
 
+/* TODO IGUAL: Estructura original del formulario */
 .new-employee-form {
     width: 100%;
     max-width: 1100px;
@@ -17,12 +44,11 @@
 
 .new-employee-card {
     background-color: var(--card-bg);
-    padding: 50px 60px;
+    padding: 50px 60px;     /* ← ORIGINAL */
     border-radius: 18px;
-
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 28px;              /* ← ORIGINAL */
 
     box-shadow:
             inset 2px 2px 10px rgba(0,0,0,1),
@@ -32,59 +58,93 @@
 .new-employee-title {
     text-align: center;
     font-size: 26px;
-    color: white;
+    color: var(--text-color);
 }
 
 .new-employee-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 22px 32px;
+    grid-template-columns: repeat(2, 1fr);  /* ← 2 COLUMNAS ORIGINAL */
+    gap: 22px 32px;                         /* ← ORIGINAL */
 }
 
+/* Inputs originales + tema */
 .new-employee-input {
     width: 100%;
     min-height: 48px;
     padding: 0 12px;
-
-    background-color: #212121;
-    color: #fff;
-
+    background-color: var(--card-bg);
+    color: var(--text-color);
     border-radius: 6px;
-    border: 2px solid #212121;
-
+    border: 2px solid var(--shadow-dark);
     box-shadow:
-            6px 6px 10px rgba(0,0,0,1),
-            1px 1px 10px rgba(255,255,255,0.6);
-
+            6px 6px 10px var(--shadow-dark),
+            1px 1px 10px var(--shadow-light);
     transition: 0.3s;
+    font-size: 16px;
+}
+
+/* MODO CLARO: solo inputs cambian a blanco */
+[data-theme="light"] .new-employee-input {
+    background-color: #ffffff !important;
+    color: rgba(33, 33, 33, 0.87) !important;
+    border-color: var(--input-focus-border);
 }
 
 .new-employee-input:focus {
     transform: scale(1.03);
+    outline: none;
+}
+
+.new-employee-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.new-employee-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--label-color);
 }
 
 .new-employee-btn {
     align-self: center;
     padding: 12px 45px;
-
-    background-color: #212121;
-    color: white;
-
+    background-color: var(--card-bg);
+    color: var(--text-color);
     border-radius: 8px;
     border: none;
     cursor: pointer;
-
     box-shadow:
             6px 6px 10px rgba(0,0,0,1),
             1px 1px 10px rgba(255,255,255,0.6);
 }
 
+/* Responsive: estructura 100% igual, solo padding */
 @media (max-width: 768px) {
+    .employee-card-wrapper {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        margin: 0 auto 1rem auto;
+        display: flex;
+        justify-content: center;
+        z-index: auto;
+    }
+
+    .new-employee-container {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+        padding-top: 100px !important;
+    }
+
+    /* ESTRUCTURA FORMULARIO IGUAL: solo 1 columna en móvil */
     .new-employee-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* ← SOLO CAMBIA A 1 COLUMNA EN MÓVIL */
+        gap: 16px;
     }
 
     .new-employee-card {
-        padding: 35px 25px;
+        padding: 35px 25px; /* ← PADDING MÓVIL ORIGINAL */
     }
 }
