@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -101,6 +102,11 @@ public class CompensationService {
         return repo.findByEmployeeId(employeeId)
                 .stream().map(mapper::toDto).toList();
     }
+
+    public Optional<Compensation> findLatestByEmployee(Long employeeId) {
+        return repo.findFirstByEmployeeIdOrderByEffectiveFromDesc(employeeId);
+    }
+
 
 
 }

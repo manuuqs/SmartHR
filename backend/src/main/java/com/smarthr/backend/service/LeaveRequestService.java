@@ -63,4 +63,10 @@ public class LeaveRequestService {
                 .collect(Collectors.toList());
     }
 
+    public List<LeaveRequestDto> listRecentByEmployee(Long employeeId, int limit) {
+        return listByEmployee(employeeId).stream().limit(limit).toList();
+    }
+
+
+
 }

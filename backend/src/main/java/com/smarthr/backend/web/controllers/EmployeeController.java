@@ -233,6 +233,29 @@ public class EmployeeController {
                 .body(result);
     }
 
+    @Operation(summary = "Obtiene TODOS los empleados completos para RAG (solo RRHH)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Empleados completos",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = EmployeeCompleteDto.class))))
+    })
+    @GetMapping("/completeRag")
+    public ResponseEntity<List<EmployeeCompleteDto>> getEmployeesComplete() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // SOLO RRHH puede ver todos los empleados completos
+        if (!user.getRoles().contains("ROLE_RRHH")) {
+            throw new AccessDeniedException("Solo RRHH puede acceder a datos completos de todos los empleados");
+        }
+
+        List<EmployeeCompleteDto> completeEmployees = service.getEmployeesComplete();
+        return ResponseEntity.ok(completeEmployees);
+    }
+
+
+
 
 }
 

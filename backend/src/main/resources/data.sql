@@ -277,3 +277,24 @@ SELECT id, '2024-06-01', 'GOOD', 'Cumple objetivos como freelance'
 FROM employees WHERE email='alfonso@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
+
+-- =====================
+-- RAG PGVector SmartHR Assistant (AÑADIR AL FINAL)
+-- =====================
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS rag_documents (
+                                             id BIGSERIAL PRIMARY KEY,
+                                             content TEXT NOT NULL,
+                                             metadata JSONB,
+                                             embedding VECTOR(384)
+    );
+
+CREATE INDEX IF NOT EXISTS rag_documents_embedding_idx
+    ON rag_documents USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = 100);
+
+
+
+

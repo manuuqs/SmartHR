@@ -4,6 +4,7 @@ package com.smarthr.backend.service;
 import com.smarthr.backend.domain.*;
 import com.smarthr.backend.repository.*;
 import com.smarthr.backend.web.dto.ContractTypeDto;
+import com.smarthr.backend.web.dto.EmployeeCompleteDto;
 import com.smarthr.backend.web.dto.NewEmployeeCompleteDto;
 import com.smarthr.backend.web.mapper.AssignmentMapper;
 import com.smarthr.backend.web.mapper.EmployeeMapper;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.smarthr.backend.web.dto.ContractTypeDto.*;
@@ -264,6 +266,62 @@ public class EmployeeService {
 
         return employee;
     }
+
+    @Transactional(readOnly = true)
+    public List<EmployeeCompleteDto> getEmployeesComplete() {
+        return repository.findAll().stream()
+                .map(employee -> {
+                    Long empId = employee.getId();
+
+                    // Skills
+                    List<String> skills = employeeSkillRepository.findByEmployeeId(empId)
+                            .stream()
+                            .map(skill -> skill.getSkill().getName())
+                            .toList();
+
+                    // Proyectos
+                    List<String> projects = assignmentRepository.findByEmployeeId(empId)
+                            .stream()
+                            .map(assignment -> assignment.getProject().getCode() +
+                                    " (" + assignment.getProject().getName() + ")")
+                            .toList();
+
+                    // Contrato (último activo)
+                    Contract contract = contractRepository.findFirstByEmployeeIdOrderByStartDateDesc(empId)
+                            .orElse(null);
+
+                    // Salario (último)
+                    Compensation compensation = compensationService.findLatestByEmployee(empId)
+                            .orElse(null);
+
+                    // Ausencias recientes
+                    List<String> leaves = leaveRequestService.listRecentByEmployee(empId, 3)
+                            .stream()
+                            .map(lr -> lr.getType() + " (" + lr.getStatus() + ")")
+                            .toList();
+
+                    return new EmployeeCompleteDto(
+                            employee.getId(),
+                            employee.getName(),
+                            employee.getEmail(),
+                            employee.getLocation(),
+                            employee.getHireDate(),
+                            employee.getDepartment().getName(),
+                            employee.getJobPosition().getTitle(),
+                            skills,
+                            projects,
+                            contract != null ? contract.getType().name() : null,
+                            contract != null ? contract.getWeeklyHours() : null,
+                            contract != null ? contract.getStartDate() : null,
+                            contract != null ? contract.getEndDate() : null,
+                            compensation != null ? compensation.getBaseSalary() : null,
+                            compensation != null ? compensation.getBonus() : null,
+                            leaves
+                    );
+                })
+                .toList();
+    }
+
 
 
 }

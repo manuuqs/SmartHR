@@ -52,7 +52,25 @@ services:
     networks:
       - smarthr_net
 
-  # --- IA Assistant (Spring Boot + Spring AI + RAG) ---
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: smarthr_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - smarthr_net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s  # ← Espera 90s para inicialización
+
+
+  # Assistant Spring AI + Ollama
   assistant:
     build:
       context: ./assistant
@@ -63,18 +81,18 @@ services:
       SPRING_DATASOURCE_USERNAME: tfg_user
       SPRING_DATASOURCE_PASSWORD: tfg_pass
       SPRING_PROFILES_ACTIVE: dev
-      # Proveedor LLM (ajusta según tu caso)
-      # Si usas Ollama local, añadiremos ese servicio en Sprint 4.
+      # OLLAMA LOCAL (GRATIS)
+      SPRING_AI_OLLAMA_BASE_URL: http://ollama:11434
+      SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL: llama3.2:3b
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+      - ollama
     ports:
       - "9090:9090"
     networks:
       - smarthr_net
 
   # --- Frontend (React + Vite) PRODUCCIÓN por Nginx ---
-
 
   frontend:
     build:
@@ -101,4 +119,5 @@ networks:
 volumes:
   db_data:
   pgadmin_data:
+  ollama_data:
 
