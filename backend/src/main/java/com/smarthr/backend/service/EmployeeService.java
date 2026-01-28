@@ -3,7 +3,6 @@ package com.smarthr.backend.service;
 
 import com.smarthr.backend.domain.*;
 import com.smarthr.backend.repository.*;
-import com.smarthr.backend.web.dto.ContractTypeDto;
 import com.smarthr.backend.web.dto.EmployeeCompleteDto;
 import com.smarthr.backend.web.dto.NewEmployeeCompleteDto;
 import com.smarthr.backend.web.mapper.AssignmentMapper;
@@ -19,11 +18,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.smarthr.backend.web.dto.ContractTypeDto.*;
 
 /**
  * Servicio de negocio para Employee.
@@ -267,59 +266,90 @@ public class EmployeeService {
         return employee;
     }
 
+
     @Transactional(readOnly = true)
-    public List<EmployeeCompleteDto> getEmployeesComplete() {
-        return repository.findAll().stream()
-                .map(employee -> {
-                    Long empId = employee.getId();
+    public List<EmployeeCompleteDto> getEmployeesCompleteRag() {
 
-                    // Skills
-                    List<String> skills = employeeSkillRepository.findByEmployeeId(empId)
-                            .stream()
-                            .map(skill -> skill.getSkill().getName())
-                            .toList();
+        List<Employee> employees = repository.findAll();
 
-                    // Proyectos
-                    List<String> projects = assignmentRepository.findByEmployeeId(empId)
-                            .stream()
-                            .map(assignment -> assignment.getProject().getCode() +
-                                    " (" + assignment.getProject().getName() + ")")
-                            .toList();
-
-                    // Contrato (último activo)
-                    Contract contract = contractRepository.findFirstByEmployeeIdOrderByStartDateDesc(empId)
-                            .orElse(null);
-
-                    // Salario (último)
-                    Compensation compensation = compensationService.findLatestByEmployee(empId)
-                            .orElse(null);
-
-                    // Ausencias recientes
-                    List<String> leaves = leaveRequestService.listRecentByEmployee(empId, 3)
-                            .stream()
-                            .map(lr -> lr.getType() + " (" + lr.getStatus() + ")")
-                            .toList();
-
-                    return new EmployeeCompleteDto(
-                            employee.getId(),
-                            employee.getName(),
-                            employee.getEmail(),
-                            employee.getLocation(),
-                            employee.getHireDate(),
-                            employee.getDepartment().getName(),
-                            employee.getJobPosition().getTitle(),
-                            skills,
-                            projects,
-                            contract != null ? contract.getType().name() : null,
-                            contract != null ? contract.getWeeklyHours() : null,
-                            contract != null ? contract.getStartDate() : null,
-                            contract != null ? contract.getEndDate() : null,
-                            compensation != null ? compensation.getBaseSalary() : null,
-                            compensation != null ? compensation.getBonus() : null,
-                            leaves
-                    );
-                })
+        return employees.stream()
+                .map(this::buildEmployeeCompleteDto)
                 .toList();
+    }
+
+    private EmployeeCompleteDto buildEmployeeCompleteDto(Employee employee) {
+
+        Long employeeId = employee.getId();
+
+        EmployeeDto empDto = mapper.toDto(employee);
+
+        // Skills → nombres
+        List<String> skills = employeeSkillRepository.findByEmployeeId(employeeId)
+                .stream()
+                .map(es -> es.getSkill().getName())
+                .toList();
+
+        // Proyectos
+        List<String> projects = assignmentRepository.findByEmployeeId(employeeId)
+                .stream()
+                .map(a -> a.getProject().getName())
+                .distinct()
+                .toList();
+
+        Contract contract = contractRepository
+                .findFirstByEmployeeIdOrderByStartDateDesc(employeeId)
+                .orElse(null);
+
+        String contractType = null;
+        Integer weeklyHours = null;
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+
+        if (contract != null) {
+            contractType = contract.getType().name();
+            weeklyHours = contract.getWeeklyHours();
+            startDate = contract.getStartDate();
+            endDate = contract.getEndDate();
+        }
+
+        // Salario (última compensación)
+        Compensation compensation = compensationService
+                .findLatestByEmployee(employeeId)
+                .orElse(null);
+
+        BigDecimal baseSalary = null;
+        BigDecimal bonus = null;
+
+        if (compensation != null) {
+            baseSalary = compensation.getBaseSalary();
+            bonus = compensation.getBonus();
+        }
+
+        // Ausencias
+        List<String> leaveRequests = leaveRequestService.listByEmployee(employeeId)
+                .stream()
+                .map(lr -> lr.getType() + " (" + lr.getStartDate() + " - " + lr.getEndDate() + ")")
+                .toList();
+
+        return new EmployeeCompleteDto(
+                empDto.getId(),
+                empDto.getName(),
+                empDto.getEmail(),
+                empDto.getLocation(),
+                empDto.getHireDate(),
+                empDto.getDepartmentName(),
+                empDto.getJobPositionTitle(),
+                skills,
+                projects,
+                contractType,
+                weeklyHours,
+                startDate,
+                endDate,
+                baseSalary,
+                bonus,
+                leaveRequests
+        );
+
     }
 
 

@@ -23,10 +23,13 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/auth/register").permitAll()
-                        .requestMatchers("/api/employees/me/**").hasAnyAuthority("ROLE_EMPLOYEE", "ROLE_RRHH")
+
+                        .requestMatchers("/auth/login", "/auth/register", "/public/completeRag").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/auth/delete/**").hasAuthority("ROLE_ADMIN") // Solo ADMIN puede eliminar usuarios
+
+                        .requestMatchers("/api/employees/me/**").hasAnyAuthority("ROLE_EMPLOYEE", "ROLE_RRHH")
+                        .requestMatchers("/auth/delete/**").hasAuthority("ROLE_ADMIN")
+
                         .requestMatchers("/api/**").hasAuthority("ROLE_RRHH")
                         .anyRequest().authenticated()
                 )
@@ -34,6 +37,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
