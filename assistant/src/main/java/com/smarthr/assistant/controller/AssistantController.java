@@ -11,13 +11,19 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AssistantController {
 
-    private final RagService ragService;  // ← Inyectar RagService
+    private final RagService ragService;
 
     @PostMapping("/chat")
-    public String chat(@RequestBody ChatRequest request) {
-        // ⭐ USAR RAG en lugar de chatClient directo
-        return ragService.chatWithRag(request.message());
+    public String chat(
+            @RequestBody ChatRequest request
+           // @RequestHeader("Authorization") String authHeader  // ⭐ Token del front
+    ) {
+
+        //String token = authHeader.replace("Bearer ", "");
+          return ragService.chatWithRag(request.message());
     }
 }
+
+
 
 
