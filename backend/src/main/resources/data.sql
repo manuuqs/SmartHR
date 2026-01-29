@@ -278,22 +278,30 @@ FROM employees WHERE email='alfonso@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
 
--- =====================
--- RAG PGVector SmartHR Assistant (AÑADIR AL FINAL)
--- =====================
+-- ============================================
+-- RAG PGVector SmartHR Assistant - OBLIGATORIO
+-- ============================================
+
+-- ============================================
+-- RAG PGVector SmartHR Assistant - OLLAMA 1024
+-- ============================================
 
 CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS hstore;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE IF NOT EXISTS rag_documents (
-                                             id BIGSERIAL PRIMARY KEY,
-                                             content TEXT NOT NULL,
-                                             metadata JSONB,
-                                             embedding VECTOR(384)
-    );
+-- ⭐ RECREAR con dimensiones correctas (1024 para Ollama)
+CREATE TABLE vector_store (
+                              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                              content TEXT NOT NULL,
+                              metadata JSONB,
+                              embedding VECTOR(1024)  -- ← CAMBIADO A 1024
+);
 
-CREATE INDEX IF NOT EXISTS rag_documents_embedding_idx
-    ON rag_documents USING ivfflat (embedding vector_cosine_ops)
-    WITH (lists = 100);
+CREATE INDEX vector_store_embedding_idx ON vector_store
+    USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+
+
 
 
 

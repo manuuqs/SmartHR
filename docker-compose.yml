@@ -81,9 +81,10 @@ services:
       SPRING_DATASOURCE_USERNAME: tfg_user
       SPRING_DATASOURCE_PASSWORD: tfg_pass
       SPRING_PROFILES_ACTIVE: dev
-      # OLLAMA LOCAL (GRATIS)
+
       SPRING_AI_OLLAMA_BASE_URL: http://ollama:11434
       SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL: llama3.2:3b
+      SPRING_AI_OLLAMA_EMBEDDING_OPTIONS_MODEL: mxbai-embed-large
     depends_on:
       - db
       - ollama
