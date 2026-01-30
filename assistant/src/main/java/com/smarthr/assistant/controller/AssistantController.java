@@ -41,21 +41,21 @@ public class AssistantController {
 //    }
     @PostMapping("/chat")
     public ResponseEntity<Map<String, String>> chat(@RequestBody Map<String, String> request) {
-        String message = request.getOrDefault("message", "sin mensaje");
-        System.out.println("🧠 Chat SmartHR RAG: {}" + message);
+
+        String message = request.getOrDefault("message", "").trim();
+        System.out.println("🧠 Chat SmartHR RAG: " + message);
 
         try {
-            String response = ragService.chatWithRag(message);  // ⭐ Tu método real
-
+            String response = ragService.chatWithRag(message);
             return ResponseEntity.ok(Map.of("response", response));
 
         } catch (Exception e) {
-            System.out.println("❌ Error RAG: "+ e);
+            System.out.println("❌ Error RAG: " + e.getMessage());
             return ResponseEntity.ok(Map.of(
-                    "response", "¡Hola! SmartHR básico OK ✅\nError RAG: " + e.getMessage()
+                    "response", "El asistente no está disponible en este momento. Contacte con el administrador del sistema."
             ));
         }
-}
+    }
 
 
 }

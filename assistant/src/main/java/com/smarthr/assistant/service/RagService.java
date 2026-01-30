@@ -31,7 +31,7 @@ public class RagService {
     @Autowired
     private VectorStore vectorStore;  // PGVector
 
-    @EventListener(ApplicationReadyEvent.class)
+    //@EventListener(ApplicationReadyEvent.class)
     public void syncSmartHRData() {
         for (int i = 0; i < 6; i++) {
             try {
@@ -247,29 +247,59 @@ public class RagService {
        💬 CHAT RAG
        ========================== */
     public String chatWithRag(String message) {
+
+
+        // 1️⃣ Respuesta directa a saludos
+        if (message.matches("(?i)^(hola|buenos días|buenas|hello).*")) {
+            return "Hola. Soy el asistente interno de SmartHR. ¿En qué puedo ayudarte?";
+        }
+
+        // 2️⃣ Búsqueda semántica
         List<Document> relevant = vectorStore.similaritySearch(message);
 
         if (relevant.isEmpty()) {
-            return "No dispongo de información interna suficiente para responder a esa pregunta.";
+            return """
+               No dispongo de información interna suficiente para responder a esa consulta.
+               Para más detalles, contacte con el departamento de RRHH o con el administrador del sistema.
+               """;
         }
 
+        // 3️⃣ Limitamos resultados manualmente
         String context = relevant.stream()
                 .limit(5)
                 .map(Document::getContent)
                 .collect(Collectors.joining("\n\n---\n\n"));
 
+        // 4️⃣ Prompt profesional y controlado
         return chatClient.prompt()
                 .system("""
-                        Eres el asistente interno de SmartHR.
-                        Responde SOLO con la información proporcionada.
-                        Si no hay datos suficientes, dilo claramente.
+                Eres SmartHR Assistant, el asistente corporativo interno de gestión de personas.
 
-                        INFORMACIÓN EMPLEADOS SmartHR:
-                        """ + context)
+                Rol:
+                - Asistes a empleados y managers con información interna de SmartHR
+                - Respondes de forma profesional, clara y concisa
+                - NO inventas información ni usas conocimiento externo
+                - SOLO utilizas la información proporcionada en el contexto
+
+                Estilo de respuesta:
+                - Profesional y cordial
+                - Sin emojis
+                - Lenguaje corporativo
+                - No saludes a menos que el usuario lo haga
+                - No menciones entidades, personas o proyectos no presentes en el contexto
+
+                Si la información no está disponible:
+                - Indícalo claramente
+                - Sugiere contactar con RRHH o administración
+
+                Contexto interno SmartHR:
+                -------------------------
+                """ + context)
                 .user(message)
                 .call()
                 .content();
     }
+
 
     private void sleep(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}

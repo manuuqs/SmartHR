@@ -61,3 +61,18 @@ ollama pull llama3
 ollama pull mxbai-embed-large
 exit
 
+docker exec smarthr_ollama ollama list
+
+docker exec smarthr_ollama ollama pull llama3.2:3b   
+docker exec smarthr_ollama ollama pull mxbai-embed-large  
+
+si se me duplica vgvector:
+SELECT metadata->>'entityId' AS entity_id, COUNT(*)
+FROM vector_store
+GROUP BY metadata->>'entityId'
+HAVING COUNT(*) > 1;
+
+DELETE FROM vector_store a
+USING vector_store b
+WHERE a.ctid > b.ctid
+AND a.metadata->>'entityId' = b.metadata->>'entityId';
