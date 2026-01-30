@@ -6,16 +6,23 @@ spring:
     url: jdbc:postgresql://db:5432/tfg_db
     username: tfg_user
     password: tfg_pass
+
   jpa:
     hibernate:
       ddl-auto: validate
+
   ai:
     ollama:
       base-url: http://localhost:11434
       chat:
-        model: llama3
+        model: llama3.2:3b
       embedding:
         model: mxbai-embed-large
+
+    vectorstore:
+      pgvector:
+        table-name: vector_store
+        id-type: STRING
 
 management:
   endpoints:

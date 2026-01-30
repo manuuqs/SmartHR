@@ -16,16 +16,17 @@ services:
     networks:
       - smarthr_net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U tfg_user -d tfg_db" ]
+      test: ["CMD-SHELL", "pg_isready -U tfg_user -d tfg_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # --- PGAdmin ---
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: smarthr_pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@smarthr.dev   # <-- cambia aquí
+      PGADMIN_DEFAULT_EMAIL: admin@smarthr.dev
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
@@ -36,7 +37,6 @@ services:
       - smarthr_net
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-
 
   # --- Backend Spring Boot ---
   backend:
@@ -52,7 +52,7 @@ services:
     networks:
       - smarthr_net
 
-
+  # --- Ollama LLM ---
   ollama:
     image: ollama/ollama:latest
     container_name: smarthr_ollama
@@ -62,15 +62,16 @@ services:
       - ollama_data:/root/.ollama
     networks:
       - smarthr_net
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1" ]
+    healthcheck:  # ← AÑADE ESTO
+      test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 90s  # ← Espera 90s para inicialización
+      start_period: 90s
 
 
-  # Assistant Spring AI + Ollama
+
+  # --- Assistant Spring AI + Ollama ---
   assistant:
     build:
       context: ./assistant
@@ -86,15 +87,16 @@ services:
       SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL: llama3.2:3b
       SPRING_AI_OLLAMA_EMBEDDING_OPTIONS_MODEL: mxbai-embed-large
     depends_on:
-      - db
-      - ollama
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
     ports:
       - "9090:9090"
     networks:
       - smarthr_net
 
-  # --- Frontend (React + Vite) PRODUCCIÓN por Nginx ---
-
+  # --- Frontend (React + Vite) ---
   frontend:
     build:
       context: ./frontend
@@ -112,7 +114,6 @@ services:
     networks:
       - smarthr_net
 
-
 networks:
   smarthr_net:
     driver: bridge
@@ -121,4 +122,3 @@ volumes:
   db_data:
   pgadmin_data:
   ollama_data:
-

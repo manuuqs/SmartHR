@@ -55,7 +55,9 @@ docker-compose.yml
 - PRs: revisión por pares cuando sea posible
 
 ## Próximos sprints
-- Sprint 2: CRUD de gestión de personal
-- Sprint 3: Frontend React
-- Sprint 4: IA Assistant (Spring AI + RAG)
-- Sprint 5: Despliegue y pruebas
+docker compose up -d ollama
+docker exec -it smarthr_ollama /bin/sh
+ollama pull llama3
+ollama pull mxbai-embed-large
+exit
+

@@ -286,20 +286,34 @@ FROM employees WHERE email='alfonso@smarthr.dev'
 -- RAG PGVector SmartHR Assistant - OLLAMA 1024
 -- ============================================
 
+-- Extensiones necesarias
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS hstore;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- ⭐ RECREAR con dimensiones correctas (1024 para Ollama)
-CREATE TABLE vector_store (
-                              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                              content TEXT NOT NULL,
-                              metadata JSONB,
-                              embedding VECTOR(1024)  -- ← CAMBIADO A 1024
-);
+-- Tabla vector_store compatible con IDs deterministas
+CREATE TABLE IF NOT EXISTS vector_store (
+                                            id TEXT PRIMARY KEY,                     -- ⬅️ ID DE NEGOCIO (employee:1, project:PRJ001, etc.)
+                                            content TEXT NOT NULL,                   -- texto embebido
+                                            metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+                                            embedding VECTOR(1024)                   -- dimensión correcta para Ollama
+    );
 
-CREATE INDEX vector_store_embedding_idx ON vector_store
-    USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+-- Índice vectorial (búsqueda semántica)
+CREATE INDEX IF NOT EXISTS vector_store_embedding_idx
+    ON vector_store
+    USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = 100);
+
+-- Índice por metadata (filtrado, debug, limpieza)
+CREATE INDEX IF NOT EXISTS vector_store_metadata_idx
+    ON vector_store
+    USING GIN (metadata);
+
+-- Índice específico por entityId (muy útil)
+CREATE INDEX IF NOT EXISTS vector_store_entity_idx
+    ON vector_store
+    USING GIN ((metadata->'entityId'));
+
 
 
 
