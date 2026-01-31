@@ -57,7 +57,7 @@ public class LeaveRequestService {
     }
 
     public List<LeaveRequestDto> getPendingRequests() {
-        List<LeaveRequest> pending = repo.findByStatus(LeaveRequest.LeaveStatus.PENDING);
+        List<LeaveRequest> pending = repo.findAll();
         return pending.stream()
                 .map(mapper::toDto) // Usamos el mapper que ya tienes
                 .collect(Collectors.toList());

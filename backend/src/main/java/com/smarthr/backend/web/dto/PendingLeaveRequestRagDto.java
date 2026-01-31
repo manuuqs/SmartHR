@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public record PendingLeaveRequestRagDto(
         String employeeName,
+        String status,
         String type,
         LocalDate startDate,
         LocalDate endDate,

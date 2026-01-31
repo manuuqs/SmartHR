@@ -194,6 +194,7 @@ public class RagService {
         String leaveId = l.employeeName() + ":" + l.startDate();
         Map<String,Object> metadata = Map.of(
                 "source", "smarthr",
+                "status", l.status(),
                 "type", "LEAVE_REQUEST",
                 "entityId", "leave:" + leaveId,
                 "leaveType", l.type()
@@ -202,11 +203,13 @@ public class RagService {
                 Solicitud de ausencia.
 
                 Empleado: %s.
+                Estado de la solicitud: %s.
                 Tipo: %s.
                 Periodo: %s → %s.
                 Comentarios: %s.
                 """.formatted(
                 l.employeeName(),
+                l.status(),
                 l.type(),
                 l.startDate(),
                 l.endDate(),

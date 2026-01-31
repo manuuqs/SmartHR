@@ -40,6 +40,7 @@ public class RagSnapshotService {
                 .stream()
                 .map(lr -> new PendingLeaveRequestRagDto(
                         lr.getEmployeeName(),
+                        lr.getStatus(),
                         lr.getType(),
                         lr.getStartDate(),
                         lr.getEndDate(),
