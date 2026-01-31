@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -16,12 +17,16 @@ import org.springframework.context.event.EventListener;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RagService {
+
+    private static final double MIN_SCORE = 0.75;
 
     private final RestTemplate restTemplate;
 
@@ -125,25 +130,23 @@ public class RagService {
                 "client", p.client()
         );
 
-        String content = """
-                Proyecto de SmartHR.
+                String content = """
+                Proyecto interno de la empresa SmartHR llamado %s (código %s).
+                Cliente: %s. Ubicación principal: %s.
+                Inicio del proyecto: %s. %s.
+                Este proyecto puede estar asociado a uno o varios empleados y departamentos de SmartHR.
+                """
+                .formatted(
+                        p.name(),
+                        p.code(),
+                        p.client(),
+                        p.ubication(),
+                        p.startDate(),
+                        p.endDate() != null ? "Fecha de finalización: " + p.endDate() : "Actualmente el proyecto sigue activo"
+                );
 
-                Nombre: %s.
-                Código: %s.
-                Cliente: %s.
-                Ubicación: %s.
-                Inicio: %s.
-                %s
-                """.formatted(
-                p.name(),
-                p.code(),
-                p.client(),
-                p.ubication(),
-                p.startDate(),
-                p.endDate() != null ? "Finalización: " + p.endDate() : "Proyecto activo"
-        );
 
-        return new Document(content, metadata);
+                return new Document(content, metadata);
     }
 
     /* ==========================
@@ -156,11 +159,12 @@ public class RagService {
                 "entityId", "skill:" + s.name()
         );
         String content = """
-                Habilidad en SmartHR.
+            Habilidad técnica utilizada en SmartHR: %s.
+            Descripción de la habilidad: %s.
+            Esta skill puede estar asociada a empleados que la usan en sus proyectos.
+            """
+                .formatted(s.name(), s.description());
 
-                Nombre: %s.
-                Descripción: %s.
-                """.formatted(s.name(), s.description());
         return new Document(content, metadata);
     }
 
@@ -174,11 +178,12 @@ public class RagService {
                 "entityId", "department:" + d.name()
         );
         String content = """
-                Departamento de SmartHR.
+            Departamento interno de SmartHR llamado %s.
+            Descripción: %s.
+            En este departamento trabajan varios empleados con diferentes puestos y habilidades.
+            """
+                        .formatted(d.name(), d.description());
 
-                Nombre: %s.
-                Descripción: %s.
-                """.formatted(d.name(), d.description());
         return new Document(content, metadata);
     }
 
@@ -214,94 +219,290 @@ public class RagService {
        📄 EMPLOYEE TEXT
        ========================== */
     private String buildEmployeeText(EmployeeCompleteDto emp) {
+        String skills = emp.skills().isEmpty()
+                ? "sin habilidades registradas explícitamente"
+                : "con habilidades en " + String.join(", ", emp.skills());
+
+        String projects = emp.projects().isEmpty()
+                ? "sin proyectos asignados actualmente"
+                : "participando en los proyectos " + String.join(", ", emp.projects());
+
+        String bonus = emp.bonus() != null
+                ? " y un bonus de " + emp.bonus() + " €"
+                : "";
+
         return """
-                Empleado de SmartHR.
-
-                Nombre: %s.
-                Puesto: %s (%s).
-                Ubicación: %s.
-                Fecha de alta: %s.
-
-                Habilidades: %s.
-                Proyectos: %s.
-
-                Contratro: %s.
-                Jornada: %d horas/semana.
-                Salario: %.2f € %s.
-                """.formatted(
-                emp.name(),
-                emp.jobPosition(),
-                emp.department(),
-                emp.location(),
-                emp.hireDate(),
-                emp.skills().isEmpty() ? "No especificadas" : String.join(", ", emp.skills()),
-                emp.projects().isEmpty() ? "Ninguno" : String.join(", ", emp.projects()),
-                emp.contractType(),
-                emp.weeklyHours(),
-                emp.baseSalary(),
-                emp.bonus() != null ? "(bonus " + emp.bonus() + " €)" : ""
-        );
+        Empleado de la empresa SmartHR llamado %s.
+        Trabaja como %s en el departamento de %s, ubicado en %s, y se incorporó el %s.
+        Es un perfil %s y actualmente está %s.
+        Su contrato es de tipo %s, con una jornada de %d horas semanales y un salario base de %.2f €%s.
+        """
+                .formatted(
+                        emp.name(),
+                        emp.jobPosition(),
+                        emp.department(),
+                        emp.location(),
+                        emp.hireDate(),
+                        skills,
+                        projects,
+                        emp.contractType(),
+                        emp.weeklyHours(),
+                        emp.baseSalary(),
+                        bonus
+                );
     }
+
 
     /* ==========================
        💬 CHAT RAG
        ========================== */
     public String chatWithRag(String message) {
 
+        String lower = message.toLowerCase();
 
-        // 1️⃣ Respuesta directa a saludos
-        if (message.matches("(?i)^(hola|buenos días|buenas|hello).*")) {
-            return "Hola. Soy el asistente interno de SmartHR. ¿En qué puedo ayudarte?";
+        // 0️⃣ Caso especial: AUSENCIAS → saltamos al handler especializado
+        if (lower.contains("ausencia") || lower.contains("ausencias")) {
+            return handleAbsenceQuery(message);
         }
 
-        // 2️⃣ Búsqueda semántica
-        List<Document> relevant = vectorStore.similaritySearch(message);
+        // 1️⃣ Búsqueda semántica (TU MÉTODO EXISTENTE)
+        String enhancedQuery = rewriteQuery(message);
+        List<Document> relevant = vectorStore.similaritySearch(enhancedQuery);
 
         if (relevant.isEmpty()) {
-            return """
-               No dispongo de información interna suficiente para responder a esa consulta.
-               Para más detalles, contacte con el departamento de RRHH o con el administrador del sistema.
-               """;
+            return noDataResponse();
         }
 
-        // 3️⃣ Limitamos resultados manualmente
-        String context = relevant.stream()
-                .limit(5)
-                .map(Document::getContent)
-                .collect(Collectors.joining("\n\n---\n\n"));
+        // 2️⃣ FILTRO "no X" (Manuel, etc.)
+        relevant = filterExcludeRequests(message, relevant);
 
-        // 4️⃣ Prompt profesional y controlado
+        // 3️⃣ MIN_SCORE REDUCIDO + LOGS
+        List<Document> highConfidence = relevant.stream()
+                .filter(doc -> {
+                    log.info("📊 Documento encontrado: {}", extractEntityName(doc.getText(), doc.getMetadata()));
+                    return true; // 🔽 ACEPTA TODOS (era el problema MIN_SCORE)
+                })
+                .limit(5)
+                .toList();
+
+        if (highConfidence.isEmpty()) {
+            String response = handleAbsenceFallback(message, relevant);
+            if (!response.equals(noDataResponse())) {
+                return response;
+            }
+            return noDataResponse();
+        }
+
+        // 4️⃣ Contexto con metadata
+        String context = buildContextWithMetadata(highConfidence);
+
+        // 5️⃣ Prompt PRO
         return chatClient.prompt()
                 .system("""
-                Eres SmartHR Assistant, el asistente corporativo interno de gestión de personas.
+    Eres SmartHR Assistant, asistente oficial de gestión de personas.
 
-                Rol:
-                - Asistes a empleados y managers con información interna de SmartHR
-                - Respondes de forma profesional, clara y concisa
-                - NO inventas información ni usas conocimiento externo
-                - SOLO utilizas la información proporcionada en el contexto
+    REGLAS OBLIGATORIAS:
+    1. SOLO datos del CONTEXTO (ignorar conocimiento externo)
+    2. Español profesional, sin emojis en respuesta final
+    3. Estructura: 1 oración + bullets + [Fuente]
+    
+    FORMATO EXACTO:
+    ```
+    Respuesta clara y directa.
+    
+    • Dato 1
+    • Dato 2
+    
+    [Fuente: Nombre entidad]
+    ```
+    
+    CONTEXTO VECTOR_STORE:
+    %s
+    """.formatted(context))
+                .user("PREGUNTA: %s".formatted(message))
+                .call()
+                .content();
+    }
 
-                Estilo de respuesta:
-                - Profesional y cordial
-                - Sin emojis
-                - Lenguaje corporativo
-                - No saludes a menos que el usuario lo haga
-                - No menciones entidades, personas o proyectos no presentes en el contexto
+    private List<Document> searchLeaveRequests(String message) {
 
-                Si la información no está disponible:
-                - Indícalo claramente
-                - Sugiere contactar con RRHH o administración
+        SearchRequest request = SearchRequest.builder()
+                .query(" solicitud ausencia leave request sickness vacaciones baja médica ")
+                .topK(20)
+                .similarityThreshold(0.2f)
+                .filterExpression("type == 'LEAVE_REQUEST'")
+                .build();
 
-                Contexto interno SmartHR:
-                -------------------------
-                """ + context)
-                .user(message)
+        return vectorStore.similaritySearch(request);
+    }
+
+    public String handleAbsenceQuery(String message) {
+        List<Document> leaves = searchLeaveRequests(message);
+
+        log.info("🧪 LEAVE_REQUEST docs encontrados: {}", leaves.size());
+        for (Document d : leaves) {
+            log.info("📄 [{}] {}", d.getMetadata().get("entityId"), d.getText());
+        }
+
+        if (leaves.isEmpty()) {
+            return """
+            No hay solicitudes de ausencia registradas en el sistema.
+            Para más detalles, consulte el módulo de ausencias de SmartHR.
+            """;
+        }
+
+        String context = buildContextWithMetadata(leaves);
+
+        return chatClient.prompt()
+                .system("""
+            Eres SmartHR Assistant, especializado en solicitudes de ausencia.
+            A partir del contexto, responde qué solicitudes de ausencias hay.
+
+            Formato:
+            ```
+            Resumen breve.
+            • Empleado – Tipo – Periodo – Comentario
+            [Fuente: Sistema de ausencias SmartHR]
+            ```
+
+            CONTEXTO:
+            %s
+            """.formatted(context))
+                .user("Pregunta del usuario: %s".formatted(message))
                 .call()
                 .content();
     }
 
 
+    // 🆕 QUERY REWRITING (30+ keywords clave)
+    private String rewriteQuery(String original) {
+        String lower = original.toLowerCase().trim();
+
+        // 🔑 AUSENCIAS: solo enriquecemos la query, no llamamos al handler
+        if (lower.contains("ausencia") || lower.contains("ausencias")) {
+            return original + " solicitud ausencia leave request sickness pending approved vacaciones baja médica ";
+        }
+
+        if (lower.contains("pendiente") || lower.contains("pendientes")) {
+            return original + " pending status abierto no aprobado solicitud";
+        }
+
+        // 💼 EMPLEADOS
+        if (lower.contains("empleado") || lower.contains("empleados")) {
+            return original + " nombre puesto departamento salario java spring boot desarrollo";
+        }
+
+        if (lower.contains("habilidad") || lower.contains("habilidades")) {
+            return original + " java spring boot docker kubernetes postgresql redis git javascript";
+        }
+
+        if (lower.contains("salario") || lower.contains("sueldo")) {
+            return original + " salario sueldo pago bonus contrato permanente precario";
+        }
+
+        return original;
+    }
+
+
+    // 🆕 FALLBACK AUSENCIAS (usa TU similaritySearch)
+    private String handleAbsenceFallback(String message, List<Document> relevant) {
+        String lowerMsg = message.toLowerCase();
+        if (lowerMsg.contains("ausencia") || lowerMsg.contains("pendiente")) {
+            // 🔧 Usa TU método existente
+            List<Document> absenceDocs = vectorStore.similaritySearch(
+                    "solicitud ausencia sickness leave request vacaciones baja");
+
+            if (!absenceDocs.isEmpty()) {
+                String context = buildContextWithMetadata(absenceDocs);
+                return chatClient.prompt()
+                        .system("""
+        No hay ausencias PENDIENTES. Muestra HISTÓRICO disponible.
+        
+        FORMATO:
+        "No hay ausencias pendientes. Histórico reciente:
+        • Empleado X: Tipo Y (fecha)
+        
+        [Fuente: Sistema ausencias]"
+        
+        CONTEXTO: %s
+        """.formatted(context))
+                        .user(message)
+                        .call()
+                        .content();
+            }
+        }
+        return noDataResponse();
+    }
+
+    // ✅ MÉTODOS SIMPLIFICADOS (sin dependencias raras)
+    private List<Document> filterExcludeRequests(String message, List<Document> docs) {
+        String lowerMsg = message.toLowerCase();
+        if (lowerMsg.contains("no ") || lowerMsg.contains("excepto ")) {
+            Pattern excludePattern = Pattern.compile("(?i)(no|excepto)\\s+([a-záéíóúñ]+(?:\\s+[a-záéíóúñ]+)?)");
+            Matcher matcher = excludePattern.matcher(message);
+
+            while (matcher.find()) {
+                String excludeName = matcher.group(2).toLowerCase();
+                docs.removeIf(doc -> doc.getText().toLowerCase().contains(excludeName));
+            }
+        }
+        return docs;
+    }
+
+    private String buildContextWithMetadata(List<Document> docs) {
+        return docs.stream()
+                .map(doc -> {
+                    String text = doc.getText();
+                    String entityName = extractEntityName(text);
+                    return String.format("📄 %s\n%s\n", entityName, text);
+                })
+                .collect(Collectors.joining("\n---\n"));
+    }
+
+    private String extractEntityName(String text) {
+        // 🔧 SIMPLIFICADO: solo regex básico
+        Pattern p = Pattern.compile("(?i)nombre[:\\s]+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)");
+        Matcher m = p.matcher(text);
+        if (m.find()) {
+            return m.group(1);
+        }
+        return "Documento SmartHR";
+    }
+
+
+    private String extractEntityName(String text, Map<String, Object> metadata) {
+        Pattern patterns[] = {
+                Pattern.compile("(?i)nombre[:\\s]+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)"),
+                Pattern.compile("(?i)(empleado|ausencia)[:\\s]+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)")
+        };
+
+        for (Pattern p : patterns) {
+            Matcher m = p.matcher(text);
+            if (m.find()) return m.group(1).trim();
+        }
+        return metadata.getOrDefault("type", "Documento").toString();
+    }
+
+
+    // =====================
+    // Helpers
+    // =====================
+
+    private double getScore(Document doc) {
+        Object score = doc.getMetadata().get("score");
+        return (score instanceof Number n) ? n.doubleValue() : 1.0;
+    }
+
+    private String noDataResponse() {
+        return """
+        No dispongo de información interna suficiente para responder a esa consulta.
+        Para más detalles, contacte con el departamento de Recursos Humanos
+        o con el administrador del sistema.
+        """;
+    }
+
     private void sleep(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
     }
+
 }

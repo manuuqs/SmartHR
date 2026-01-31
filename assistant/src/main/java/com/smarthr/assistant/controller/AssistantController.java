@@ -1,25 +1,20 @@
 package com.smarthr.assistant.controller;
 
-import com.smarthr.assistant.service.RagService;  // Ajusta tu package
-import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Map;
-import org.springframework.http.ResponseEntity;
-import lombok.extern.slf4j.Slf4j;
-import com.smarthr.assistant.dto.ChatRequest;
-import com.smarthr.assistant.service.RagService;
-import lombok.RequiredArgsConstructor;
 
+import com.smarthr.assistant.service.SmartHRAssistantService;
 import org.springframework.http.ResponseEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/assistant")
 @RequiredArgsConstructor
 public class AssistantController {
 
-    private final RagService ragService;
+
+    private final SmartHRAssistantService assistantService;
 
 //    @PostMapping("/chat")
 //    public String chat(
@@ -46,7 +41,7 @@ public class AssistantController {
         System.out.println("🧠 Chat SmartHR RAG: " + message);
 
         try {
-            String response = ragService.chatWithRag(message);
+            String response = assistantService.chat(message);
             return ResponseEntity.ok(Map.of("response", response));
 
         } catch (Exception e) {

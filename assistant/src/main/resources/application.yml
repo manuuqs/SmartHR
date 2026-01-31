@@ -22,7 +22,7 @@ spring:
     vectorstore:
       pgvector:
         table-name: vector_store
-        id-type: STRING
+        id-type: TEXT
 
 management:
   endpoints:
