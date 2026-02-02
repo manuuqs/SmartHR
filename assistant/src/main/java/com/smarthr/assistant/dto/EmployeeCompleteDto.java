@@ -1,5 +1,7 @@
 package com.smarthr.assistant.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -16,8 +18,9 @@ public record EmployeeCompleteDto(
         // Skills
         List<String> skills,
 
-        // Proyectos
-        List<String> projects,
+        // 🔥 IMPORTANTE: acepta "projects" del backend
+        @JsonAlias("projects")
+        List<ProjectRagDto> projectsInfo,
 
         // Contrato
         String contractType,

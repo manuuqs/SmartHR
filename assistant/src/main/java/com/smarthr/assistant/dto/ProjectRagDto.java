@@ -1,6 +1,9 @@
 package com.smarthr.assistant.dto;
 
+
+
 import java.time.LocalDate;
+
 
 public record ProjectRagDto(
         String code,
@@ -9,4 +12,6 @@ public record ProjectRagDto(
         String ubication,
         LocalDate startDate,
         LocalDate endDate
-) {}
+) {
+
+}

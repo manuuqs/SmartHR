@@ -5,6 +5,7 @@ import com.smarthr.backend.domain.*;
 import com.smarthr.backend.repository.*;
 import com.smarthr.backend.web.dto.EmployeeCompleteDto;
 import com.smarthr.backend.web.dto.NewEmployeeCompleteDto;
+import com.smarthr.backend.web.dto.ProjectRagDto;
 import com.smarthr.backend.web.mapper.AssignmentMapper;
 import com.smarthr.backend.web.mapper.EmployeeMapper;
 import com.smarthr.backend.web.exceptions.ResourceNotFoundException;
@@ -290,10 +291,18 @@ public class EmployeeService {
                 .toList();
 
         // Proyectos
-        List<String> projects = assignmentRepository.findByEmployeeId(employeeId)
+        List<ProjectRagDto> projects = assignmentRepository.findByEmployeeId(employeeId)
                 .stream()
-                .map(a -> a.getProject().getName())
+                .map(a -> a.getProject())
                 .distinct()
+                .map(p -> new ProjectRagDto(
+                        p.getCode(),
+                        p.getName(),
+                        p.getClient(),
+                        p.getUbication(),
+                        p.getStartDate(),
+                        p.getEndDate()
+                ))
                 .toList();
 
         Contract contract = contractRepository

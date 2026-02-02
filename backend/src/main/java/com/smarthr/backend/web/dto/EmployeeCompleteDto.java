@@ -4,6 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * DTO que representa un empleado completo, incluyendo sus habilidades,
+ * ausencias y proyectos completos asociados.
+ */
 public record EmployeeCompleteDto(
         Long id,
         String name,
@@ -16,8 +20,8 @@ public record EmployeeCompleteDto(
         // Skills
         List<String> skills,
 
-        // Proyectos
-        List<String> projects,
+        // Proyectos completos del empleado
+        List<ProjectRagDto> projects,
 
         // Contrato
         String contractType,

@@ -1,6 +1,7 @@
 package com.smarthr.backend.service;
 
 import com.smarthr.backend.domain.Project;
+import com.smarthr.backend.repository.AssignmentRepository;
 import com.smarthr.backend.repository.DepartmentRepository;
 import com.smarthr.backend.repository.ProjectRepository;
 import com.smarthr.backend.repository.SkillRepository;
@@ -21,15 +22,51 @@ public class RagSnapshotService {
     private final LeaveRequestService leaveRequestService;
     private final EmployeeService employeeService;
     private final SkillRepository skillRepository;
+    private final AssignmentRepository assignmentRepository;
 
     public CompanyRagSnapshotDto getCompanyRagSnapshot() {
 
-        List<EmployeeCompleteDto> employees = employeeService.getEmployeesCompleteRag();
-
-        List<ProjectRagDto> projects = projectRepository.findAll()
+        // 1️⃣ Traemos todos los proyectos del repositorio
+        List<ProjectRagDto> allProjects = projectRepository.findAll()
                 .stream()
                 .map(this::toProjectRag)
                 .toList();
+
+        // 2️⃣ Traemos todos los empleados y asociamos sus proyectos completos
+        List<EmployeeCompleteDto> employees = employeeService.getEmployeesCompleteRag()
+                .stream()
+                .map(emp -> {
+                    // Recuperamos los proyectos completos del empleado
+                    List<ProjectRagDto> employeeProjects = assignmentRepository.findByEmployeeId(emp.id())
+                            .stream()
+                            .map(a -> toProjectRag(a.getProject())) // convierte Project -> ProjectRagDto
+                            .distinct()
+                            .toList();
+
+                    // Creamos un nuevo EmployeeCompleteDto con los proyectos completos
+                    return new EmployeeCompleteDto(
+                            emp.id(),
+                            emp.name(),
+                            emp.email(),
+                            emp.location(),
+                            emp.hireDate(),
+                            emp.department(),
+                            emp.jobPosition(),
+                            emp.skills(),
+                            employeeProjects,
+                            emp.contractType(),
+                            emp.weeklyHours(),
+                            emp.contractStartDate(),
+                            emp.contractEndDate(),
+                            emp.baseSalary(),
+                            emp.bonus(),
+                            emp.leaveRequests()
+                    );
+                })
+                .toList();
+
+        // 3️⃣ El resto de la info (proyectos, departamentos, skills, ausencias) igual
+        List<ProjectRagDto> projects = allProjects;
 
         List<DepartmentRagDto> departments = departmentRepository.findAll()
                 .stream()
@@ -56,8 +93,10 @@ public class RagSnapshotService {
                 ))
                 .toList();
 
+        // 4️⃣ Retornamos snapshot
         return new CompanyRagSnapshotDto(employees, projects, departments, skills, pending);
     }
+
 
     private ProjectRagDto toProjectRag(Project p) {
         return new ProjectRagDto(
