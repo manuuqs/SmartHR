@@ -250,12 +250,17 @@ SELECT id, 3200.00, 550, '2023-09-15' FROM employees WHERE email='carlos@smarthr
 -- LEAVE REQUESTS
 -- =====================
 INSERT INTO leave_requests (employee_id, type, status, start_date, end_date, comments)
-SELECT id, 'VACATION', 'APPROVED', '2024-08-01', '2024-08-15', 'Vacaciones de verano'
+SELECT id, 'VACACIONES', 'APPROVED', '2024-08-01', '2024-08-15', 'Vacaciones de verano'
 FROM employees WHERE email='manuel@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
 INSERT INTO leave_requests (employee_id, type, status, start_date, end_date, comments)
-SELECT id, 'SICKNESS', 'PENDING', '2024-02-10', '2024-02-12', 'Gripe común'
+SELECT id, 'ENFERMEDAD', 'PENDING', '2024-02-10', '2024-02-12', 'Gripe común'
+FROM employees WHERE email='julene@smarthr.dev'
+    ON CONFLICT DO NOTHING;
+
+INSERT INTO leave_requests (employee_id, type, status, start_date, end_date, comments)
+SELECT id, 'EXCEDENCIA', 'REJECTED', '2025-02-10', '2026-02-10', 'Excedencia por motivos personales'
 FROM employees WHERE email='julene@smarthr.dev'
     ON CONFLICT DO NOTHING;
 
