@@ -342,6 +342,19 @@ public class RagService {
     public String handleAbsenceQuery(String message) {
         List<Document> leaves = searchLeaveRequests(message);
 
+        String employeeName = extractEmployeeName(message);
+
+
+        if (employeeName != null) {
+            String clean = employeeName.toLowerCase();
+
+
+    // 🔥 FILTRAR SOLO LAS AUSENCIAS DE ESE EMPLEADO
+                leaves = leaves.stream()
+                        .filter(doc -> doc.getText().toLowerCase().contains(clean))
+                        .toList();
+        }
+
         log.info("🧪 LEAVE_REQUEST docs encontrados: {}", leaves.size());
         for (Document d : leaves) {
             log.info("📄 [{}] {}", d.getMetadata().get("entityId"), d.getText());
@@ -374,6 +387,17 @@ public class RagService {
                 .user("Pregunta del usuario: %s".formatted(message))
                 .call()
                 .content();
+    }
+
+
+    private String extractEmployeeName(String message) {
+        // Busca patrones de nombre y apellido en la pregunta
+        Pattern p = Pattern.compile("([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)");
+        Matcher m = p.matcher(message);
+        if (m.find()) {
+            return m.group(1);
+        }
+        return null;
     }
 
 

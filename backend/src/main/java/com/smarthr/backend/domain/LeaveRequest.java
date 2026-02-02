@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @Table(name = "leave_requests")
 public class LeaveRequest {
 
-    public enum LeaveType { VACATION, SICKNESS, UNPAID, OTHER }
+    public enum LeaveType { VACACIONES, ENFERMEDAD, CONSULTAMEDICA, ASUNTOSPROPIOS, EXCEDENCIA, OTROS }
     public enum LeaveStatus { PENDING, APPROVED, REJECTED }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
