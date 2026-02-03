@@ -274,6 +274,11 @@ public class RagService {
             return handleEmployeesByProject(message, enhancedQuery);
         }
 
+        // ================== 🆕 PROYECTOS (info, activos, por cliente, con empleados)
+        if (intent == RagIntent.PROJECT) {
+            return handleProjects(message, enhancedQuery);
+        }
+
         // ================== 🆕 EMPLEADO POR NOMBRE
         String employeeName = extractEmployeeName(message);
         if (employeeName != null) {
@@ -429,6 +434,121 @@ public class RagService {
         return RagIntent.GENERIC;
     }
 
+    private String extractClientFromMessage(String message) {
+        String n = normalize(message);
+
+        // patrones habituales
+        if (n.contains("cliente nike") || n.contains("nike")) return "nike";
+        if (n.contains("cliente ibm") || n.contains("ibm")) return "ibm";
+        if (n.contains("cliente salesforce") || n.contains("salesforce")) return "salesforce";
+        if (n.contains("cliente microsoft") || n.contains("microsoft")) return "microsoft";
+        if (n.contains("cliente accenture") || n.contains("accenture")) return "accenture";
+        if (n.contains("cliente smarthr") || n.contains("smarthr")) return "smarthr";
+
+        return null;
+    }
+
+    private String handleProjects(String message, String enhancedQuery) {
+
+        String targetProject = extractProjectNameFromMessage(message);
+        String targetLocation = extractProjectLocation(message);
+        String targetClient = extractClientFromMessage(message);
+
+        System.out.println("📝 target: " + targetLocation + ", " + targetProject + ", " + targetClient);
+
+
+        // 1️⃣ Buscar proyectos
+        SearchRequest projectRequest = SearchRequest.builder()
+                .query(enhancedQuery)
+                .topK(15)
+                .similarityThreshold(0.2f)
+                .filterExpression("type == 'PROJECT'")
+                .build();
+
+        List<Document> projectDocs = vectorStore.similaritySearch(projectRequest);
+
+        // 🟢 SIN FILTROS → todos los proyectos
+        if (targetProject == null && targetLocation == null && targetClient == null) {
+            return answerWithContext(message, projectDocs);
+        }
+
+        if (projectDocs.isEmpty()) return noDataResponse();
+
+        // 2️⃣ Filtrar proyectos
+        List<Document> matchedProjects = projectDocs.stream()
+                .filter(doc -> {
+                    Map<String, Object> meta = doc.getMetadata();
+
+                    String pName = normalize((String) meta.get("projectName"));
+                    String pClient = normalize((String) meta.get("client"));
+                    String pLocation = normalize((String) meta.get("ubication"));
+
+                    boolean matchByName =
+                            targetProject != null &&
+                                    (pName.contains(targetProject) || targetProject.contains(pName));
+
+                    boolean matchByClient =
+                            targetClient != null &&
+                                    pClient.contains(targetClient);
+
+                    boolean matchByLocation =
+                            targetLocation != null &&
+                                    pLocation.equals(targetLocation);
+
+                    // 🔥 regla OR flexible
+                    return matchByName || matchByClient || matchByLocation;
+                })
+                .toList();
+
+        if (matchedProjects.isEmpty()) return noDataResponse();
+
+        // 3️⃣ ¿La pregunta pide EMPLEADOS?
+        boolean wantsEmployees =
+                normalize(message).contains("empleado")
+                        || normalize(message).contains("trabajan")
+                        || normalize(message).contains("participan");
+
+        if (!wantsEmployees) {
+            // 👉 Solo info de proyectos
+            return answerWithContext(message, matchedProjects);
+        }
+
+        // 4️⃣ Buscar empleados
+        List<Document> employeeDocs = vectorStore.similaritySearch(
+                SearchRequest.builder()
+                        .topK(100)
+                        .filterExpression("type == 'EMPLOYEE'")
+                        .build()
+        );
+
+        Set<String> projectNames = matchedProjects.stream()
+                .map(d -> normalize((String) d.getMetadata().get("projectName")))
+                .collect(Collectors.toSet());
+
+        // 5️⃣ Filtrar empleados por proyectos
+        List<Document> matchedEmployees = employeeDocs.stream()
+                .filter(doc -> {
+                    Object projectsMeta = doc.getMetadata().get("projects");
+
+                    if (projectsMeta instanceof Collection<?> col) {
+                        for (Object pObj : col) {
+                            if (pObj instanceof Map<?, ?> pMap) {
+                                String pName = normalize((String) pMap.get("name"));
+                                if (projectNames.stream()
+                                        .anyMatch(n -> n.contains(pName) || pName.contains(n))) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    return false;
+                })
+                .toList();
+
+        if (matchedEmployees.isEmpty()) return noDataResponse();
+
+        return answerWithContext(message, matchedEmployees);
+    }
 
     private String handleEmployeesByProject(String message, String enhancedQuery) {
 
@@ -516,7 +636,6 @@ public class RagService {
         return answerWithContext(message, matchedEmployees);
     }
 
-
     private String extractProjectNameFromMessage(String message) {
         String n = normalize(message);
 
@@ -552,8 +671,6 @@ public class RagService {
 
         return null;
     }
-
-
 
     private String extractDepartment(String message) {
         String n = normalize(message);
