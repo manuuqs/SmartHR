@@ -169,31 +169,32 @@ public class RagService {
 
 
     private Document projectToDoc(ProjectRagDto p) {
-        Map<String,Object> metadata = Map.of(
-                "source", "smarthr",
-                "type", "PROJECT",
-                "entityId", "project:" + p.code(),
-                "client", p.client(),
-                "ubication", p.ubication()
-        );
+
+        Map<String,Object> metadata = new HashMap<>();
+        metadata.put("source", "smarthr");
+        metadata.put("type", "PROJECT");
+        metadata.put("entityId", "project:" + p.code());
+        metadata.put("projectName", p.name());   // 🔥 CLAVE
+        metadata.put("client", p.client());
+        metadata.put("ubication", p.ubication());
 
         String content = """
-                Proyecto interno de la empresa SmartHR llamado %s (código %s).
-                Cliente: %s. Ubicación principal: %s.
-                Inicio del proyecto: %s. %s.
-                Este proyecto puede estar asociado a uno o varios empleados y departamentos de SmartHR.
-                """
+            Proyecto interno de la empresa SmartHR llamado %s (código %s).
+            Cliente: %s. Ubicación principal: %s.
+            Inicio del proyecto: %s. %s.
+            """
                 .formatted(
                         p.name(),
                         p.code(),
                         p.client(),
                         p.ubication(),
                         p.startDate(),
-                        p.endDate() != null ? "Fecha de finalización: " + p.endDate() : "Actualmente el proyecto sigue activo"
+                        p.endDate() != null ? "Fecha de finalización: " + p.endDate() : "Actualmente activo"
                 );
 
         return new Document(content, metadata);
     }
+
 
     private Document skillToDoc(SkillRagDto s) {
         Map<String,Object> metadata = Map.of(
@@ -259,7 +260,9 @@ public class RagService {
     public String chatWithRag(String message) {
 
         RagIntent intent = detectIntent(message);
+        System.out.println("🔍 Intent detected: " + intent);
         String enhancedQuery = rewriteQuery(message);
+        System.out.println("📝 Enhanced query: " + enhancedQuery);
 
         // ================== AUSENCIAS (NO TOCAR)
         if (intent == RagIntent.LEAVE_REQUEST) {
@@ -429,6 +432,7 @@ public class RagService {
 
     private String handleEmployeesByProject(String message, String enhancedQuery) {
 
+
         // 1️⃣ Buscar proyectos relevantes
         SearchRequest projectRequest = SearchRequest.builder()
                 .query(enhancedQuery)
@@ -437,44 +441,68 @@ public class RagService {
                 .filterExpression("type == 'PROJECT'")
                 .build();
 
+        System.out.println("🔍 Searching projects with request: " + projectRequest);
         List<Document> projectDocs = vectorStore.similaritySearch(projectRequest);
+        System.out.println("🔍 projectDocs: " + projectDocs.stream().map(Document::toString).collect(Collectors.joining("\n")));
         if (projectDocs.isEmpty()) return noDataResponse();
 
-        Set<String> projectNamesNormalized = projectDocs.stream()
-                .map(d -> normalize(d.getText()))
-                .collect(Collectors.toSet());
+
+        // 2️⃣ Traer empleados
+        List<Document> employeeDocs = vectorStore.similaritySearch(
+                SearchRequest.builder()
+                        .topK(100)
+                        .filterExpression("type == 'EMPLOYEE'")
+                        .build()
+        );
+
+        String targetProject = extractProjectNameFromMessage(message);
+        System.out.println("🔍 targetProject: " + targetProject);
+        String targetProjectLocation = extractProjectLocation(message);
+        System.out.println("🔍 targetProjectLocation: " + targetProjectLocation);
 
         Set<String> clientsNormalized = projectDocs.stream()
                 .map(d -> normalize((String) d.getMetadata().get("client")))
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.toSet());
 
-        // 2️⃣ Traer empleados
-        SearchRequest employeeRequest = SearchRequest.builder()
-                .topK(100)
-                .filterExpression("type == 'EMPLOYEE'")
-                .build();
+        boolean hasProjectName = targetProject != null;
+        boolean hasLocation = targetProjectLocation != null;
+        boolean hasClient = !clientsNormalized.isEmpty();
+        boolean hasProjectCode = extractProjectCode(message) != null;
 
-        List<Document> employeeDocs = vectorStore.similaritySearch(employeeRequest);
+        if (!hasProjectName && !hasLocation && !hasClient && !hasProjectCode) {
+            return noDataResponse();
+        }
 
-        // 3️⃣ Filtrar empleados por proyectos / clientes
+
+        // 3️⃣ Filtrar empleados por proyectos / cliente
         List<Document> matchedEmployees = employeeDocs.stream()
                 .filter(doc -> {
                     Object projectsMeta = doc.getMetadata().get("projects");
+
                     if (projectsMeta instanceof Collection<?> col) {
                         for (Object pObj : col) {
-                            if (pObj instanceof ProjectRagDto p) {
-                                String pName = normalize(p.name());
-                                String pClient = normalize(p.client());
 
-                                // ✅ Coincidencia parcial por nombre o cliente
-                                boolean matchProject = projectNamesNormalized.stream()
-                                        .anyMatch(n -> n.contains(pName) || pName.contains(n));
+                            if (pObj instanceof Map<?, ?> pMap) {
 
-                                boolean matchClient = clientsNormalized.isEmpty()
-                                        || clientsNormalized.stream().anyMatch(c -> c.contains(pClient) || pClient.contains(c));
+                                String pName = normalize((String) pMap.get("name"));
+                                String pClient = normalize((String) pMap.get("client"));
+                                String pLocation = normalize((String) pMap.get("ubication"));
 
-                                if (matchProject || matchClient) return true;
+                                boolean matchByName = targetProject != null &&
+                                        (pName.contains(targetProject) || targetProject.contains(pName));
+
+                                boolean matchByClient = targetProject == null &&
+                                        clientsNormalized.stream()
+                                                .anyMatch(c -> c.contains(pClient) || pClient.contains(c));
+
+                                boolean matchByLocation = targetProjectLocation != null &&
+                                        pLocation.equals(targetProjectLocation);
+
+                                // 🔥 Regla final (orden importa)
+                                if (matchByName || matchByClient || matchByLocation) {
+                                    return true;
+                                }
                             }
                         }
                     }
@@ -482,10 +510,49 @@ public class RagService {
                 })
                 .toList();
 
+
         if (matchedEmployees.isEmpty()) return noDataResponse();
 
         return answerWithContext(message, matchedEmployees);
     }
+
+
+    private String extractProjectNameFromMessage(String message) {
+        String n = normalize(message);
+
+        if (n.contains("optimizacion de procesos")) return "optimizacion de procesos";
+        if (n.contains("desarrollo apis")) return "desarrollo apis";
+        if (n.contains("portal web")) return "portal web corporativo";
+        if (n.contains("migracion cloud")) return "migracion cloud";
+        if (n.contains("sistema rrhh")) return "sistema rrhh";
+
+        return null;
+    }
+
+    private String extractProjectCode(String message) {
+        String n = normalize(message);
+
+        if (n.contains("PRJ001")) return "PRJ001";
+        if (n.contains("PRJ002")) return "PRJ002";
+        if (n.contains("PRJ003")) return "PRJ003";
+        if (n.contains("PRJ004")) return "PRJ004";
+        if (n.contains("PRJ005")) return "PRJ005";
+        if (n.contains("PRJ006")) return "PRJ006";
+
+        return null;
+    }
+
+    private String extractProjectLocation(String message) {
+        String n = normalize(message);
+
+        if (n.contains("madrid")) return "madrid";
+        if (n.contains("barcelona")) return "barcelona";
+        if (n.contains("remote") || n.contains("remoto")) return "remote";
+        if (n.contains("sevilla")) return "sevilla";
+
+        return null;
+    }
+
 
 
     private String extractDepartment(String message) {
