@@ -49,6 +49,8 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    environment:
+      JWT_SECRET: smarthr-super-long-secret-key-32-bytes-min
     networks:
       - smarthr_net
 
@@ -78,6 +80,7 @@ services:
       dockerfile: Dockerfile
     container_name: smarthr_assistant
     environment:
+      JWT_SECRET: smarthr-super-long-secret-key-32-bytes-min
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/tfg_db
       SPRING_DATASOURCE_USERNAME: tfg_user
       SPRING_DATASOURCE_PASSWORD: tfg_pass

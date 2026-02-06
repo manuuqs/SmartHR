@@ -5,6 +5,7 @@ import Loader from "../components/Loader.jsx";
 import "../styles/RRHHDashboard.css";
 import { useNavigate } from "react-router-dom";
 import InfoCard from "../components/InfoCard";
+import AIChat from "../components/AIChat";
 
 import dockerIcon from "../assets/dockerIcon.png";
 import javaIcon from "../assets/javaIcon.png";
@@ -401,6 +402,7 @@ export default function RRHHDashboard() {
                 {/* Estado vacío */}
                 {!employeeData && !projectResults && !pendingLeaves && <p></p>}
             </main>
+            <AIChat />
         </div>
     );
 }
