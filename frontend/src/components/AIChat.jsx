@@ -1,19 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+
 import "../styles/AIChat.css";
 
 export default function AIChat() {
-    const [messages, setMessages] = useState([
-        { from: "assistant", text: "Hola 👋 ¿En qué puedo ayudarte?" }
-    ]);
+
+    const [messages, setMessages] = useState(() => {
+        const saved = localStorage.getItem("aiChatMessages");
+        return saved
+            ? JSON.parse(saved)
+            : [{ from: "assistant", text: "Hola 👋 ¿En qué puedo ayudarte?" }];
+    });
     const [input, setInput] = useState("");
-    const [open, setOpen] = useState(true);
+
+    const [open, setOpen] = useState(() => {
+        const saved = localStorage.getItem("aiChatOpen");
+        return saved ? JSON.parse(saved) : true;
+    });
+
     const [loading, setLoading] = useState(false);
 
     const token = localStorage.getItem("token");
     const baseUrl = import.meta.env.VITE_API_ASSISTANT_URL;
 
+    useEffect(() => {
+        localStorage.setItem("aiChatMessages", JSON.stringify(messages));
+    }, [messages]);
+
+    useEffect(() => {
+        localStorage.setItem("aiChatOpen", JSON.stringify(open));
+    }, [open]);
+
     const sendMessage = async () => {
-        if (!input.trim()) return;
+        if (!input.trim() || loading) return;
 
         const userText = input;
         setInput("");
@@ -27,9 +46,7 @@ export default function AIChat() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({
-                    message: userText
-                })
+                body: JSON.stringify({ message: userText })
             });
 
             if (!res.ok) throw new Error("Error asistente");
@@ -40,71 +57,79 @@ export default function AIChat() {
                 ...prev,
                 { from: "assistant", text: data.response }
             ]);
-        } catch (err) {
+        } catch {
             setMessages(prev => [
                 ...prev,
-                {
-                    from: "assistant",
-                    text: "⚠️ El asistente no está disponible ahora mismo"
-                }
+                { from: "assistant", text: "⚠️ El asistente no está disponible ahora mismo" }
             ]);
-        }
-        finally {
+        } finally {
             setLoading(false);
         }
     };
 
-    if (!open) return (
-        <div className="ai-chat-open-btn" onClick={() => setOpen(true)}>
-            🤖
-        </div>
-    );
+    if (!open) {
+        return (
+            <div
+                className="ai-chat-open-btn"
+                onClick={() => setOpen(true)}
+                title="Abrir asistente"
+            >
+                🤖
+            </div>
+        );
+    }
+
+    /* ==========================
+       Chat abierto
+    ========================== */
 
     return (
-        <div className="container ai-chat-fixed">
-            <div className="nav-bar">
-                <a>Chat IA</a>
-                <div className="close" onClick={() => setOpen(false)}>
-                    <div className="line one"></div>
-                    <div className="line two"></div>
-                </div>
-            </div>
-
-            <div className="messages-area">
-                {messages.map((m, i) => (
+        <div className="ai-chat ai-chat-fixed">
+            <div className="ai-chat-container">
+                {/* Header */}
+                <div className="ai-chat-header">
+                    <span>Chat IA</span>
                     <div
-                        key={i}
-                        className={`message ${m.from}`}
+                        className="ai-chat-close"
+                        onClick={() => setOpen(false)}
+                        title="Cerrar"
                     >
-                        {m.text}
+                        <span />
+                        <span />
                     </div>
-                ))}
-                {loading && (
-                    <div className="message assistant">Escribiendo…</div>
-                )}
-            </div>
+                </div>
 
-            <div className="sender-area">
-                <div className="input-place">
+                {/* Mensajes */}
+                <div className="ai-chat-messages">
+                    {messages.map((m, i) => (
+                        <div
+                            key={i}
+                            className={`ai-chat-message ${m.from}`}
+                        >
+                            {m.text}
+                        </div>
+                    ))}
+
+                    {loading && (
+                        <div className="ai-chat-message assistant">
+                            Escribiendo…
+                        </div>
+                    )}
+                </div>
+
+                {/* Input */}
+                <div className="ai-chat-input-area">
                     <input
+                        type="text"
                         placeholder="Escribe un mensaje…"
-                        className="send-input"
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         onKeyDown={e => e.key === "Enter" && sendMessage()}
-                        type="text"
+                        disabled={loading}
                     />
-                    <div className="send" onClick={sendMessage}>
-                        <svg
-                            className="send-icon"
-                            viewBox="0 0 512 512"
-                        >
-                            <path
-                                fill="#6B6C7B"
-                                d="M481.508,210.336L68.414,38.926c-17.403-7.222-37.064-4.045-51.309,8.287C2.86,59.547-3.098,78.551,1.558,96.808L38.327,241h180.026c8.284,0,15.001,6.716,15.001,15.001s-6.716,15.001-15.001,15.001H38.327L1.558,415.193c-4.656,18.258,1.301,37.262,15.547,49.595c14.274,12.357,33.937,15.495,51.31,8.287l413.094-171.409C500.317,293.862,512,276.364,512,256.001S500.317,218.139,481.508,210.336z"
-                            />
-                        </svg>
-                    </div>
+                    <button onClick={sendMessage} disabled={loading}>
+                        ➤
+                    </button>
                 </div>
             </div>
         </div>
