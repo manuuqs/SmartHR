@@ -2,6 +2,7 @@ package com.smarthr.assistant.service;
 
 import com.smarthr.assistant.dto.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
@@ -360,6 +361,80 @@ public class RagService {
         if (relevantDocs.isEmpty()) return noDataResponse();
 
         return answerWithContext(message, relevantDocs);
+    }
+
+    public String chatForEmployee(String employeeName, String message) {
+        String cleanName = normalize(employeeName);
+        log.info("👤 Chat for employee: {}", employeeName);
+
+        RagIntent intent = detectIntent(message);
+        log.info("🔍 Intent detected: {}", intent);
+
+        if (intent == RagIntent.LEAVE_REQUEST) {
+            return handleAbsenceQueryForEmployee(employeeName, message);
+        }
+
+        List<Document> employeeDocs = vectorStore.similaritySearch(
+                        SearchRequest.builder()
+                                .topK(20)
+                                .filterExpression("type == 'EMPLOYEE'")
+                                .build()
+                ).stream()
+                .filter(d -> normalize(d.getText()).contains(cleanName))
+                .toList();
+
+        if (employeeDocs.isEmpty()) {
+            return "No he encontrado información para " + employeeName;
+        }
+
+        return answerWithContext(message, employeeDocs);
+    }
+
+    private String handleAbsenceQueryForEmployee(String employeeName, String message) {
+
+        String cleanName = normalize(employeeName);
+
+        List<Document> leaves = searchLeaveRequests(message).stream()
+                .filter(doc -> normalize(doc.getText()).contains(cleanName))
+                .toList();
+
+        if (leaves.isEmpty()) {
+            return """
+        No tienes solicitudes de ausencia registradas actualmente.
+        [Fuente: Sistema de ausencias SmartHR]
+        """;
+        }
+
+        String context = buildContextWithMetadata(leaves);
+
+        return chatClient.prompt()
+                .system("""
+        Eres SmartHR Assistant.
+
+        REGLAS OBLIGATORIAS:
+        - Responde ÚNICAMENTE con la información presente en el CONTEXTO.
+        - NO resumas.
+        - NO inventes fechas ni datos.
+        - NO cambies los valores.
+        - Si un dato no existe, escribe "No especificado".
+
+        FORMATO DE SALIDA (exacto):
+        ```
+        Solicitudes de ausencia:
+        • Tipo: <tipo>
+          Periodo: <inicio> → <fin>
+          Estado: <estado>
+          Comentarios: <comentarios>
+        [Fuente: Sistema de ausencias SmartHR]
+        ```
+
+        CONTEXTO:
+        %s
+        """.formatted(context))
+                .user(message)
+                .call()
+                .content();
+
     }
 
     private String extractEmployeeLocation(String message) {

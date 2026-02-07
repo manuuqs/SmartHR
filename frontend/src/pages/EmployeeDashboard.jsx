@@ -4,7 +4,7 @@ import InfoCard from "../components/InfoCard";
 import ThemeSwitch from "../components/ThemeSwitch.jsx";
 import "../styles/EmployeeDashboard.css";
 import Loader from "../components/Loader";
-import mockData from "../mocks/employeeFullMock.json";
+import AIChat from "../components/AIChat";
 
 import dockerIcon from "../assets/dockerIcon.png";
 import javaIcon from "../assets/javaIcon.png";
@@ -87,46 +87,6 @@ export default function EmployeeDashboard() {
 
     if (loading) return <Loader />;
     if (!employeeData) return <p>Error al cargar datos</p>;
-
-    // useEffect(() => {
-    //     setTimeout(() => {
-    //         const normalizedData = {
-    //             employee: {
-    //                 id: mockData.employee.id,
-    //                 name: mockData.employee.name,
-    //                 email: mockData.employee.email,
-    //                 location: mockData.employee.location,
-    //                 hireDate: mockData.employee.hireDate,
-    //                 department: { name: mockData.employee.departmentName },
-    //                 jobPosition: { title: mockData.employee.jobPositionTitle },
-    //             },
-    //             skills: mockData.skills,
-    //             assignments: mockData.assignments.map(a => ({
-    //                 id: a.id,
-    //                 jobPosition: a.jobPosition,
-    //                 startDate: a.startDate,
-    //                 endDate: a.endDate,
-    //                 project: {
-    //                     id: a.project.id,
-    //                     code: a.project.code,
-    //                     name: a.project.name,
-    //                     client: a.project.client,
-    //                     ubication: a.project.ubication,
-    //                     startDate: a.project.startDate,
-    //                     endDate: a.project.endDate
-    //                 }
-    //             })),
-    //             contracts: mockData.contracts,
-    //             compensations: mockData.compensations,
-    //             reviews: mockData.performanceReviews,
-    //             leaveRequests: mockData.leaveRequests
-    //         };
-    //
-    //         setEmployeeData(normalizedData);
-    //         setLoading(false);
-    //     }, 500);
-    // }, []);
-
 
     return (
         <div className="dashboard-container">
@@ -294,6 +254,7 @@ export default function EmployeeDashboard() {
                     )}
                 </div>
             </div>
+            <AIChat employeeName={employeeData.employee.name} />
         </div>
     );
 }

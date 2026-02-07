@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 
-
 import "../styles/AIChat.css";
 
-export default function AIChat() {
+export default function AIChat({ employeeName }) {
 
     const [messages, setMessages] = useState(() => {
         const saved = localStorage.getItem("aiChatMessages");
@@ -11,14 +10,15 @@ export default function AIChat() {
             ? JSON.parse(saved)
             : [{ from: "assistant", text: "Hola 👋 ¿En qué puedo ayudarte?" }];
     });
+
     const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const [open, setOpen] = useState(() => {
         const saved = localStorage.getItem("aiChatOpen");
         return saved ? JSON.parse(saved) : true;
     });
 
-    const [loading, setLoading] = useState(false);
 
     const token = localStorage.getItem("token");
     const baseUrl = import.meta.env.VITE_API_ASSISTANT_URL;
@@ -31,22 +31,38 @@ export default function AIChat() {
         localStorage.setItem("aiChatOpen", JSON.stringify(open));
     }, [open]);
 
+
     const sendMessage = async () => {
         if (!input.trim() || loading) return;
 
         const userText = input;
         setInput("");
-        setMessages(prev => [...prev, { from: "user", text: userText }]);
         setLoading(true);
 
+        setMessages(prev => [...prev, { from: "user", text: userText }]);
+
+        const isEmployeeChat = Boolean(employeeName);
+
+        const endpoint = isEmployeeChat
+            ? `${baseUrl}/api/assistant/chat/employee`
+            : `${baseUrl}/api/assistant/chat`;
+
+        const body = isEmployeeChat
+            ? { message: userText, employeeName }
+            : { message: userText };
+
+        console.log("🤖 Chat mode:", isEmployeeChat ? "EMPLOYEE" : "GENERIC");
+        console.log("📡 Endpoint:", endpoint);
+        console.log("📦 Body:", body);
+
         try {
-            const res = await fetch(`${baseUrl}/api/assistant/chat`, {
+            const res = await fetch(endpoint, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ message: userText })
+                body: JSON.stringify(body),
             });
 
             if (!res.ok) throw new Error("Error asistente");
@@ -55,12 +71,16 @@ export default function AIChat() {
 
             setMessages(prev => [
                 ...prev,
-                { from: "assistant", text: data.response }
+                { from: "assistant", text: data.response },
             ]);
-        } catch {
+        } catch (err) {
+            console.error("❌ AIChat error", err);
             setMessages(prev => [
                 ...prev,
-                { from: "assistant", text: "⚠️ El asistente no está disponible ahora mismo" }
+                {
+                    from: "assistant",
+                    text: "⚠️ El asistente no está disponible ahora mismo",
+                },
             ]);
         } finally {
             setLoading(false);
@@ -86,9 +106,12 @@ export default function AIChat() {
     return (
         <div className="ai-chat ai-chat-fixed">
             <div className="ai-chat-container">
+
                 {/* Header */}
                 <div className="ai-chat-header">
-                    <span>Chat IA</span>
+                    <span>
+                        Chat IA {employeeName && `– ${employeeName}`}
+                    </span>
                     <div
                         className="ai-chat-close"
                         onClick={() => setOpen(false)}

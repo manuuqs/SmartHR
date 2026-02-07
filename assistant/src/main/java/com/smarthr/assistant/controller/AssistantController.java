@@ -2,6 +2,7 @@ package com.smarthr.assistant.controller;
 
 import java.util.Map;
 
+import com.smarthr.assistant.dto.EmployeeChatRequest;
 import com.smarthr.assistant.service.SmartHRAssistantService;
 import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ public class AssistantController {
         System.out.println("🧠 Chat SmartHR RAG: " + message);
 
         try {
-            String response = assistantService.chat(message);
+            String response = assistantService.chat(message, null);
             return ResponseEntity.ok(Map.of("response", response));
 
         } catch (Exception e) {
@@ -32,6 +33,21 @@ public class AssistantController {
                     "response", "El asistente no está disponible en este momento. Contacte con el administrador del sistema."
             ));
         }
+    }
+
+    @PostMapping("/chat/employee")
+    public ResponseEntity<Map<String, String>> chatForEmployee(
+            @RequestBody EmployeeChatRequest request
+    ) {
+
+        String response = assistantService.chat(
+                request.message(),
+                request.employeeName()
+        );
+
+        return ResponseEntity.ok(
+                Map.of("response", response)
+        );
     }
 
 
