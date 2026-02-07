@@ -1,8 +1,10 @@
 package com.smarthr.assistant.service;
 
 import com.smarthr.assistant.dto.*;
+import com.smarthr.assistant.utils.AssistantChatUtils;
+import com.smarthr.assistant.utils.RagIntent;
+import com.smarthr.assistant.utils.VgVectorInyection;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
@@ -15,20 +17,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.text.Normalizer;
-import java.time.Instant;
+import com.smarthr.assistant.utils.VgVectorInyection.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RagService {
-
-    private static final double MIN_SCORE = 0.75;
 
     private final RestTemplate restTemplate;
 
@@ -37,6 +33,12 @@ public class RagService {
 
     @Autowired
     private VectorStore vectorStore;
+
+    @Autowired
+    private VgVectorInyection vgVectorInyection;
+
+    @Autowired
+    AssistantChatUtils assistantChatUtils;
 
     //@EventListener(ApplicationReadyEvent.class)
     public void syncSmartHRData() {
@@ -59,7 +61,8 @@ public class RagService {
                 }
 
                 List<Document> documents = buildDocuments(snapshot);
-                upsertDocuments(documents);
+                vgVectorInyection.upsertDocuments(documents, vectorStore);
+
 
                 log.info("✅ RAG sincronizado: {} documentos", documents.size());
                 return;
@@ -73,225 +76,46 @@ public class RagService {
         log.error("❌ FALLÓ sync RAG");
     }
 
-    private void upsertDocuments(List<Document> documents) {
-        for (Document doc : documents) {
-            try {
-                String entityId = (String) doc.getMetadata().get("entityId");
-                if (entityId != null) {
-                    vectorStore.delete(List.of(entityId));
-                }
-            } catch (Exception ignored) {
-            }
-            vectorStore.add(List.of(doc));
-        }
-    }
-
     private List<Document> buildDocuments(CompanyRagSnapshotDto snapshot) {
         List<Document> docs = new ArrayList<>();
-        snapshot.employees().forEach(e -> docs.add(employeeToDoc(e)));
-        snapshot.projects().forEach(p -> docs.add(projectToDoc(p)));
-        snapshot.skills().forEach(s -> docs.add(skillToDoc(s)));
-        snapshot.departments().forEach(d -> docs.add(departmentToDoc(d)));
-        snapshot.pendingLeaveRequests().forEach(l -> docs.add(leaveRequestToDoc(l)));
+        snapshot.employees().forEach(e -> docs.add(vgVectorInyection.employeeToDoc(e)));
+        snapshot.projects().forEach(p -> docs.add(vgVectorInyection.projectToDoc(p)));
+        snapshot.skills().forEach(s -> docs.add(vgVectorInyection.skillToDoc(s)));
+        snapshot.departments().forEach(d -> docs.add(vgVectorInyection.departmentToDoc(d)));
+        snapshot.pendingLeaveRequests().forEach(l -> docs.add(vgVectorInyection.leaveRequestToDoc(l)));
         return docs;
     }
 
-    // ========================== EMPLEADO
-    private Document employeeToDoc(EmployeeCompleteDto emp) {
-
-        Map<String,Object> metadata = new HashMap<>();
-        metadata.put("source", "smarthr");
-        metadata.put("type", "EMPLOYEE");
-        metadata.put("entityId", "employee:" + emp.id());
-        metadata.put("jobPosition", emp.jobPosition());
-        metadata.put("location", emp.location());
-        metadata.put("department", emp.department());
-        metadata.put("updatedAt", Instant.now().toString());
-
-        // ✅ Proyectos completos del empleado
-        List<ProjectRagDto> projects =
-                emp.projectsInfo() != null ? emp.projectsInfo() : Collections.emptyList();
-
-
-        if (!projects.isEmpty()) {
-            metadata.put("projects", projects);
-        }
-
-        return new Document(buildEmployeeText(emp, projects), metadata);
-    }
-
-
-    private String buildEmployeeText(EmployeeCompleteDto emp, List<ProjectRagDto> projects) {
-
-        String skills = emp.skills().isEmpty()
-                ? "sin habilidades registradas explícitamente"
-                : "con habilidades en " + String.join(", ", emp.skills());
-
-        String projectsDetails = projects.isEmpty()
-                ? "sin proyectos asignados actualmente"
-                : projects.stream()
-                .map(p -> String.format(
-                        "%s (Código %s), Cliente: %s, Ubicación: %s, Inicio: %s, %s",
-                        p.name(),
-                        p.code(),
-                        p.client(),
-                        p.ubication(),
-                        p.startDate(),
-                        p.endDate() != null
-                                ? "Fecha de finalización: " + p.endDate()
-                                : "Actualmente activo"
-                ))
-                .collect(Collectors.joining("; "));
-
-        String bonus = emp.bonus() != null
-                ? " y un bonus de " + emp.bonus() + " €"
-                : "";
-
-        return """
-    Empleado de la empresa SmartHR llamado %s.
-    Trabaja como %s en el departamento de %s, ubicado en %s, y se incorporó el %s.
-    Es un perfil %s y actualmente está participando en los proyectos: %s.
-    Su contrato es de tipo %s, con una jornada de %d horas semanales y un salario base de %.2f €%s.
-    """
-                .formatted(
-                        emp.name(),
-                        emp.jobPosition(),
-                        emp.department(),
-                        emp.location(),
-                        emp.hireDate(),
-                        skills,
-                        projectsDetails,
-                        emp.contractType(),
-                        emp.weeklyHours(),
-                        emp.baseSalary(),
-                        bonus
-                );
-    }
-
-
-    private Document projectToDoc(ProjectRagDto p) {
-
-        Map<String,Object> metadata = new HashMap<>();
-        metadata.put("source", "smarthr");
-        metadata.put("type", "PROJECT");
-        metadata.put("entityId", "project:" + p.code());
-        metadata.put("projectName", p.name());   // 🔥 CLAVE
-        metadata.put("client", p.client());
-        metadata.put("ubication", p.ubication());
-
-        String content = """
-            Proyecto interno de la empresa SmartHR llamado %s (código %s).
-            Cliente: %s. Ubicación principal: %s.
-            Inicio del proyecto: %s. %s.
-            """
-                .formatted(
-                        p.name(),
-                        p.code(),
-                        p.client(),
-                        p.ubication(),
-                        p.startDate(),
-                        p.endDate() != null ? "Fecha de finalización: " + p.endDate() : "Actualmente activo"
-                );
-
-        return new Document(content, metadata);
-    }
-
-
-    private Document skillToDoc(SkillRagDto s) {
-        Map<String,Object> metadata = Map.of(
-                "source", "smarthr",
-                "type", "SKILL",
-                "entityId", "skill:" + s.name()
-        );
-        String content = """
-            Habilidad técnica utilizada en SmartHR: %s.
-            Descripción de la habilidad: %s.
-            Esta skill puede estar asociada a empleados que la usan en sus proyectos.
-            """
-                .formatted(s.name(), s.description());
-
-        return new Document(content, metadata);
-    }
-
-    private Document departmentToDoc(DepartmentRagDto d) {
-        Map<String,Object> metadata = Map.of(
-                "source", "smarthr",
-                "type", "DEPARTMENT",
-                "entityId", "department:" + d.name()
-        );
-        String content = """
-            Departamento interno de SmartHR llamado %s.
-            Descripción: %s.
-            En este departamento trabajan varios empleados con diferentes puestos y habilidades.
-            """
-                .formatted(d.name(), d.description());
-
-        return new Document(content, metadata);
-    }
-
-    private Document leaveRequestToDoc(PendingLeaveRequestRagDto l) {
-        String leaveId = l.employeeName() + ":" + l.startDate();
-        Map<String,Object> metadata = Map.of(
-                "source", "smarthr",
-                "status", l.status(),
-                "type", "LEAVE_REQUEST",
-                "entityId", "leave:" + leaveId,
-                "leaveType", l.type()
-        );
-        String content = """
-                Solicitud de ausencia.
-
-                Empleado: %s.
-                Estado de la solicitud: %s.
-                Tipo: %s.
-                Periodo: %s → %s.
-                Comentarios: %s.
-                """.formatted(
-                l.employeeName(),
-                l.status(),
-                l.type(),
-                l.startDate(),
-                l.endDate(),
-                l.comments() != null ? l.comments() : "Sin comentarios"
-        );
-        return new Document(content, metadata);
-    }
-
-    // ========================== CHAT RAG
     public String chatWithRag(String message) {
 
         RagIntent intent = detectIntent(message);
         System.out.println("🔍 Intent detected: " + intent);
-        String enhancedQuery = rewriteQuery(message);
+        String enhancedQuery = assistantChatUtils.rewriteQuery(message);
         System.out.println("📝 Enhanced query: " + enhancedQuery);
 
-        // ================== AUSENCIAS (NO TOCAR)
         if (intent == RagIntent.LEAVE_REQUEST) {
             return handleAbsenceQuery(message);
         }
 
-        // ================== EMPLEADOS POR PROYECTO (NO TOCAR)
         if (intent == RagIntent.EMPLOYEE_BY_PROJECT) {
             return handleEmployeesByProject(message, enhancedQuery);
         }
 
-        // ================== 🆕 PROYECTOS (info, activos, por cliente, con empleados)
         if (intent == RagIntent.PROJECT) {
             return handleProjects(message, enhancedQuery);
         }
 
-        // ================== 🆕 EMPLEADO POR NOMBRE
-        String employeeName = extractEmployeeName(message);
+        String employeeName = assistantChatUtils.extractEmployeeName(message);
         if (employeeName != null) {
-            String cleanName = normalize(employeeName);
+            String cleanName = assistantChatUtils.normalize(employeeName);
             List<Document> employees = vectorStore.similaritySearch(
                             SearchRequest.builder()
                                     .topK(100) // aumentar topK
                                     .filterExpression("type == 'EMPLOYEE'")
                                     .build()
                     ).stream()
-                    .filter(d -> normalize(d.getText()).contains(cleanName) ||
-                            normalize((String)d.getMetadata().get("entityId")).contains(cleanName.replace(" ", "-")))
+                    .filter(d -> assistantChatUtils.normalize(d.getText()).contains(cleanName) ||
+                            assistantChatUtils.normalize((String)d.getMetadata().get("entityId")).contains(cleanName.replace(" ", "-")))
                     .toList();
 
             if (!employees.isEmpty()) {
@@ -303,15 +127,13 @@ public class RagService {
             }
         }
 
-
-        // ================== 🆕 EMPLEADOS POR UBICACIÓN
-        String location = extractEmployeeLocation(message);
+        String location = assistantChatUtils.extractEmployeeLocation(message);
         if (location != null) {
             List<Document> employees = vectorStore.similaritySearch(
                     SearchRequest.builder()
                             .topK(20)
                             .filterExpression(
-                                    "type == 'EMPLOYEE' && location == '" + capitalize(location) + "'"
+                                    "type == 'EMPLOYEE' && location == '" + assistantChatUtils.capitalize(location) + "'"
                             )
                             .build()
             );
@@ -320,8 +142,7 @@ public class RagService {
                 return answerWithContext(message, employees);
         }
 
-        // ================== 🆕 EMPLEADOS POR SKILL
-        if (containsSkill(message)) {
+        if (assistantChatUtils.containsSkill(message)) {
             List<Document> employees = vectorStore.similaritySearch(
                     SearchRequest.builder()
                             .query(enhancedQuery)
@@ -334,9 +155,8 @@ public class RagService {
                 return answerWithContext(message, employees);
         }
 
-        // ================== FALLBACK GENERAL
-        String department = extractDepartment(message);
-        String locationFallback = extractEmployeeLocation(message);
+        String department = assistantChatUtils.extractDepartment(message);
+        String locationFallback = assistantChatUtils.extractEmployeeLocation(message);
 
         StringBuilder filterExpr = new StringBuilder("type == 'EMPLOYEE'");
 
@@ -346,7 +166,7 @@ public class RagService {
 
         if (locationFallback != null) {
             filterExpr.append(" && location == '")
-                    .append(capitalize(locationFallback))
+                    .append(assistantChatUtils.capitalize(locationFallback))
                     .append("'");
         }
 
@@ -358,13 +178,13 @@ public class RagService {
                 .build();
 
         List<Document> relevantDocs = vectorStore.similaritySearch(request);
-        if (relevantDocs.isEmpty()) return noDataResponse();
+        if (relevantDocs.isEmpty()) return assistantChatUtils.noDataResponse();
 
         return answerWithContext(message, relevantDocs);
     }
 
     public String chatForEmployee(String employeeName, String message) {
-        String cleanName = normalize(employeeName);
+        String cleanName = assistantChatUtils.normalize(employeeName);
         log.info("👤 Chat for employee: {}", employeeName);
 
         RagIntent intent = detectIntent(message);
@@ -380,7 +200,7 @@ public class RagService {
                                 .filterExpression("type == 'EMPLOYEE'")
                                 .build()
                 ).stream()
-                .filter(d -> normalize(d.getText()).contains(cleanName))
+                .filter(d -> assistantChatUtils.normalize(d.getText()).contains(cleanName))
                 .toList();
 
         if (employeeDocs.isEmpty()) {
@@ -392,10 +212,10 @@ public class RagService {
 
     private String handleAbsenceQueryForEmployee(String employeeName, String message) {
 
-        String cleanName = normalize(employeeName);
+        String cleanName = assistantChatUtils.normalize(employeeName);
 
         List<Document> leaves = searchLeaveRequests(message).stream()
-                .filter(doc -> normalize(doc.getText()).contains(cleanName))
+                .filter(doc -> assistantChatUtils.normalize(doc.getText()).contains(cleanName))
                 .toList();
 
         if (leaves.isEmpty()) {
@@ -405,7 +225,7 @@ public class RagService {
         """;
         }
 
-        String context = buildContextWithMetadata(leaves);
+        String context = assistantChatUtils.buildContextWithMetadata(leaves);
 
         return chatClient.prompt()
                 .system("""
@@ -437,35 +257,8 @@ public class RagService {
 
     }
 
-    private String extractEmployeeLocation(String message) {
-        Pattern p = Pattern.compile("ubicaci[oó]n\\s+en\\s+([A-Za-zÁÉÍÓÚÑáéíóúñ ]+)", Pattern.CASE_INSENSITIVE);
-        Matcher m = p.matcher(message);
-        if (m.find()) return m.group(1).trim();
-        return null;
-    }
-
-    private boolean containsSkill(String message) {
-        String m = normalize(message);
-        return m.contains("docker") || m.contains("kubernetes")
-                || m.contains("java") || m.contains("spring")
-                || m.contains("python");
-    }
-
-    private String normalize(String text) {
-        if (text == null) return "";
-        return Normalizer.normalize(text, Normalizer.Form.NFD)
-                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
-                .toLowerCase()
-                .trim();
-    }
-
-    private String capitalize(String s) {
-        if (s == null || s.isBlank()) return s;
-        return s.substring(0,1).toUpperCase() + s.substring(1);
-    }
-
     private String answerWithContext(String message, List<Document> docs) {
-        String context = buildContextWithMetadata(docs);
+        String context = assistantChatUtils.buildContextWithMetadata(docs);
 
         return chatClient.prompt()
                 .system("""
@@ -475,15 +268,6 @@ public class RagService {
                 .user(context + "\n\n" + message)
                 .call()
                 .content();
-    }
-
-    enum RagIntent {
-        EMPLOYEE,
-        PROJECT,
-        DEPARTMENT,
-        LEAVE_REQUEST,
-        EMPLOYEE_BY_PROJECT,
-        GENERIC
     }
 
     private List<Document> searchLeaveRequests(String message) {
@@ -498,7 +282,7 @@ public class RagService {
     }
 
     private RagIntent detectIntent(String message) {
-        String lower = normalize(message);
+        String lower = assistantChatUtils.normalize(message);
 
         if (lower.contains("empleados") && lower.contains("proyecto")) return RagIntent.EMPLOYEE_BY_PROJECT;
         if (lower.contains("empleado") || lower.contains("empleados") || lower.contains("trabaja")) return RagIntent.EMPLOYEE;
@@ -509,30 +293,15 @@ public class RagService {
         return RagIntent.GENERIC;
     }
 
-    private String extractClientFromMessage(String message) {
-        String n = normalize(message);
-
-        // patrones habituales
-        if (n.contains("cliente nike") || n.contains("nike")) return "nike";
-        if (n.contains("cliente ibm") || n.contains("ibm")) return "ibm";
-        if (n.contains("cliente salesforce") || n.contains("salesforce")) return "salesforce";
-        if (n.contains("cliente microsoft") || n.contains("microsoft")) return "microsoft";
-        if (n.contains("cliente accenture") || n.contains("accenture")) return "accenture";
-        if (n.contains("cliente smarthr") || n.contains("smarthr")) return "smarthr";
-
-        return null;
-    }
-
     private String handleProjects(String message, String enhancedQuery) {
 
-        String targetProject = extractProjectNameFromMessage(message);
-        String targetLocation = extractProjectLocation(message);
-        String targetClient = extractClientFromMessage(message);
+        String targetProject = assistantChatUtils.extractProjectNameFromMessage(message);
+        String targetLocation = assistantChatUtils.extractProjectLocation(message);
+        String targetClient = assistantChatUtils.extractClientFromMessage(message);
 
         System.out.println("📝 target: " + targetLocation + ", " + targetProject + ", " + targetClient);
 
-
-        // 1️⃣ Buscar proyectos
+        //Buscar proyectos
         SearchRequest projectRequest = SearchRequest.builder()
                 .query(enhancedQuery)
                 .topK(15)
@@ -542,21 +311,21 @@ public class RagService {
 
         List<Document> projectDocs = vectorStore.similaritySearch(projectRequest);
 
-        // 🟢 SIN FILTROS → todos los proyectos
+        // SIN FILTROS → todos los proyectos
         if (targetProject == null && targetLocation == null && targetClient == null) {
             return answerWithContext(message, projectDocs);
         }
 
-        if (projectDocs.isEmpty()) return noDataResponse();
+        if (projectDocs.isEmpty()) return assistantChatUtils.noDataResponse();
 
-        // 2️⃣ Filtrar proyectos
+        //Filtrar proyectos
         List<Document> matchedProjects = projectDocs.stream()
                 .filter(doc -> {
                     Map<String, Object> meta = doc.getMetadata();
 
-                    String pName = normalize((String) meta.get("projectName"));
-                    String pClient = normalize((String) meta.get("client"));
-                    String pLocation = normalize((String) meta.get("ubication"));
+                    String pName = assistantChatUtils.normalize((String) meta.get("projectName"));
+                    String pClient = assistantChatUtils.normalize((String) meta.get("client"));
+                    String pLocation = assistantChatUtils.normalize((String) meta.get("ubication"));
 
                     boolean matchByName =
                             targetProject != null &&
@@ -570,25 +339,23 @@ public class RagService {
                             targetLocation != null &&
                                     pLocation.equals(targetLocation);
 
-                    // 🔥 regla OR flexible
                     return matchByName || matchByClient || matchByLocation;
                 })
                 .toList();
 
-        if (matchedProjects.isEmpty()) return noDataResponse();
+        if (matchedProjects.isEmpty()) return assistantChatUtils.noDataResponse();
 
-        // 3️⃣ ¿La pregunta pide EMPLEADOS?
+        // ¿La pregunta pide EMPLEADOS?
         boolean wantsEmployees =
-                normalize(message).contains("empleado")
-                        || normalize(message).contains("trabajan")
-                        || normalize(message).contains("participan");
+                assistantChatUtils.normalize(message).contains("empleado")
+                        || assistantChatUtils.normalize(message).contains("trabajan")
+                        || assistantChatUtils.normalize(message).contains("participan");
 
         if (!wantsEmployees) {
-            // 👉 Solo info de proyectos
             return answerWithContext(message, matchedProjects);
         }
 
-        // 4️⃣ Buscar empleados
+        // Buscar empleados
         List<Document> employeeDocs = vectorStore.similaritySearch(
                 SearchRequest.builder()
                         .topK(100)
@@ -597,10 +364,10 @@ public class RagService {
         );
 
         Set<String> projectNames = matchedProjects.stream()
-                .map(d -> normalize((String) d.getMetadata().get("projectName")))
+                .map(d -> assistantChatUtils.normalize((String) d.getMetadata().get("projectName")))
                 .collect(Collectors.toSet());
 
-        // 5️⃣ Filtrar empleados por proyectos
+        // Filtrar empleados por proyectos
         List<Document> matchedEmployees = employeeDocs.stream()
                 .filter(doc -> {
                     Object projectsMeta = doc.getMetadata().get("projects");
@@ -608,7 +375,7 @@ public class RagService {
                     if (projectsMeta instanceof Collection<?> col) {
                         for (Object pObj : col) {
                             if (pObj instanceof Map<?, ?> pMap) {
-                                String pName = normalize((String) pMap.get("name"));
+                                String pName = assistantChatUtils.normalize((String) pMap.get("name"));
                                 if (projectNames.stream()
                                         .anyMatch(n -> n.contains(pName) || pName.contains(n))) {
                                     return true;
@@ -620,15 +387,13 @@ public class RagService {
                 })
                 .toList();
 
-        if (matchedEmployees.isEmpty()) return noDataResponse();
+        if (matchedEmployees.isEmpty()) return assistantChatUtils.noDataResponse();
 
         return answerWithContext(message, matchedEmployees);
     }
 
     private String handleEmployeesByProject(String message, String enhancedQuery) {
 
-
-        // 1️⃣ Buscar proyectos relevantes
         SearchRequest projectRequest = SearchRequest.builder()
                 .query(enhancedQuery)
                 .topK(10)
@@ -639,10 +404,9 @@ public class RagService {
         System.out.println("🔍 Searching projects with request: " + projectRequest);
         List<Document> projectDocs = vectorStore.similaritySearch(projectRequest);
         System.out.println("🔍 projectDocs: " + projectDocs.stream().map(Document::toString).collect(Collectors.joining("\n")));
-        if (projectDocs.isEmpty()) return noDataResponse();
+        if (projectDocs.isEmpty()) return assistantChatUtils.noDataResponse();
 
 
-        // 2️⃣ Traer empleados
         List<Document> employeeDocs = vectorStore.similaritySearch(
                 SearchRequest.builder()
                         .topK(100)
@@ -650,27 +414,25 @@ public class RagService {
                         .build()
         );
 
-        String targetProject = extractProjectNameFromMessage(message);
+        String targetProject = assistantChatUtils.extractProjectNameFromMessage(message);
         System.out.println("🔍 targetProject: " + targetProject);
-        String targetProjectLocation = extractProjectLocation(message);
+        String targetProjectLocation = assistantChatUtils.extractProjectLocation(message);
         System.out.println("🔍 targetProjectLocation: " + targetProjectLocation);
 
         Set<String> clientsNormalized = projectDocs.stream()
-                .map(d -> normalize((String) d.getMetadata().get("client")))
+                .map(d ->  assistantChatUtils.normalize((String) d.getMetadata().get("client")))
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.toSet());
 
         boolean hasProjectName = targetProject != null;
         boolean hasLocation = targetProjectLocation != null;
         boolean hasClient = !clientsNormalized.isEmpty();
-        boolean hasProjectCode = extractProjectCode(message) != null;
+        boolean hasProjectCode = assistantChatUtils.extractProjectCode(message) != null;
 
         if (!hasProjectName && !hasLocation && !hasClient && !hasProjectCode) {
-            return noDataResponse();
+            return assistantChatUtils.noDataResponse();
         }
 
-
-        // 3️⃣ Filtrar empleados por proyectos / cliente
         List<Document> matchedEmployees = employeeDocs.stream()
                 .filter(doc -> {
                     Object projectsMeta = doc.getMetadata().get("projects");
@@ -680,9 +442,9 @@ public class RagService {
 
                             if (pObj instanceof Map<?, ?> pMap) {
 
-                                String pName = normalize((String) pMap.get("name"));
-                                String pClient = normalize((String) pMap.get("client"));
-                                String pLocation = normalize((String) pMap.get("ubication"));
+                                String pName = assistantChatUtils.normalize((String) pMap.get("name"));
+                                String pClient = assistantChatUtils.normalize((String) pMap.get("client"));
+                                String pLocation = assistantChatUtils.normalize((String) pMap.get("ubication"));
 
                                 boolean matchByName = targetProject != null &&
                                         (pName.contains(targetProject) || targetProject.contains(pName));
@@ -694,7 +456,6 @@ public class RagService {
                                 boolean matchByLocation = targetProjectLocation != null &&
                                         pLocation.equals(targetProjectLocation);
 
-                                // 🔥 Regla final (orden importa)
                                 if (matchByName || matchByClient || matchByLocation) {
                                     return true;
                                 }
@@ -706,75 +467,19 @@ public class RagService {
                 .toList();
 
 
-        if (matchedEmployees.isEmpty()) return noDataResponse();
+        if (matchedEmployees.isEmpty()) return assistantChatUtils.noDataResponse();
 
         return answerWithContext(message, matchedEmployees);
-    }
-
-    private String extractProjectNameFromMessage(String message) {
-        String n = normalize(message);
-
-        if (n.contains("optimizacion de procesos")) return "optimizacion de procesos";
-        if (n.contains("desarrollo apis")) return "desarrollo apis";
-        if (n.contains("portal web")) return "portal web corporativo";
-        if (n.contains("migracion cloud")) return "migracion cloud";
-        if (n.contains("sistema rrhh")) return "sistema rrhh";
-
-        return null;
-    }
-
-    private String extractProjectCode(String message) {
-        String n = normalize(message);
-
-        if (n.contains("PRJ001")) return "PRJ001";
-        if (n.contains("PRJ002")) return "PRJ002";
-        if (n.contains("PRJ003")) return "PRJ003";
-        if (n.contains("PRJ004")) return "PRJ004";
-        if (n.contains("PRJ005")) return "PRJ005";
-        if (n.contains("PRJ006")) return "PRJ006";
-
-        return null;
-    }
-
-    private String extractProjectLocation(String message) {
-        String n = normalize(message);
-
-        if (n.contains("madrid")) return "madrid";
-        if (n.contains("barcelona")) return "barcelona";
-        if (n.contains("remote") || n.contains("remoto")) return "remote";
-        if (n.contains("sevilla")) return "sevilla";
-
-        return null;
-    }
-
-    private String extractDepartment(String message) {
-        String n = normalize(message);
-        if (n.contains("desarrollo")) return "Desarrollo";
-        if (n.contains("data")) return "Data";
-        if (n.contains("marketing")) return "Marketing";
-        if (n.contains("recursos humanos") || n.contains("rrhh")) return "Recursos Humanos";
-        return null;
-    }
-
-    private String buildContextWithMetadata(List<Document> docs) {
-        return docs.stream().map(d -> "📄 " + d.getText()).collect(Collectors.joining("\n---\n"));
-    }
-
-    private String noDataResponse() {
-        return """
-                No dispongo de información interna suficiente para responder a esa consulta.
-                Contacte con Recursos Humanos.
-                """;
     }
 
     public String handleAbsenceQuery(String message) {
         List<Document> leaves = searchLeaveRequests(message);
 
-        String employeeName = extractEmployeeName(message);
+        String employeeName = assistantChatUtils.extractEmployeeName(message);
 
         if (employeeName != null) {
-            String clean = normalize(employeeName);
-            leaves = leaves.stream().filter(doc -> normalize(doc.getText()).contains(clean)).toList();
+            String clean = assistantChatUtils.normalize(employeeName);
+            leaves = leaves.stream().filter(doc -> assistantChatUtils.normalize(doc.getText()).contains(clean)).toList();
         }
 
         if (leaves.isEmpty() && employeeName != null) {
@@ -788,7 +493,7 @@ public class RagService {
         """;
         }
 
-        String context = buildContextWithMetadata(leaves);
+        String context = assistantChatUtils.buildContextWithMetadata(leaves);
 
         return chatClient.prompt()
                 .system("""
@@ -808,28 +513,6 @@ public class RagService {
                 .user(message)
                 .call()
                 .content();
-    }
-
-    private String extractEmployeeName(String message) {
-        Pattern p = Pattern.compile("([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)");
-        Matcher m = p.matcher(message);
-        if (m.find()) return m.group(1);
-        return null;
-    }
-
-    private String rewriteQuery(String original) {
-        String lower = original.toLowerCase().trim();
-        if (lower.contains("ausencia") || lower.contains("ausencias"))
-            return original + " solicitud ausencia leave request sickness pending approved vacaciones baja médica ";
-        if (lower.contains("pendiente") || lower.contains("pendientes"))
-            return original + " pending status abierto no aprobado solicitud";
-        if (lower.contains("empleado") || lower.contains("empleados"))
-            return original + " empleado nombre departamento puesto";
-        if (lower.contains("habilidad") || lower.contains("habilidades"))
-            return original + " java spring boot docker kubernetes postgresql redis git javascript";
-        if (lower.contains("salario") || lower.contains("sueldo"))
-            return original + " salario sueldo pago bonus contrato permanente precario";
-        return original;
     }
 
     private void sleep(long ms) {

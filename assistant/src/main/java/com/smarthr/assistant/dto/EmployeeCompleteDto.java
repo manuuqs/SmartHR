@@ -15,23 +15,18 @@ public record EmployeeCompleteDto(
         String department,
         String jobPosition,
 
-        // Skills
         List<String> skills,
 
-        // 🔥 IMPORTANTE: acepta "projects" del backend
         @JsonAlias("projects")
         List<ProjectRagDto> projectsInfo,
 
-        // Contrato
         String contractType,
         Integer weeklyHours,
         LocalDate contractStartDate,
         LocalDate contractEndDate,
 
-        // Salario
         BigDecimal baseSalary,
         BigDecimal bonus,
 
-        // Ausencias
         List<String> leaveRequests
 ) {}
