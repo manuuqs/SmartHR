@@ -6,10 +6,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -157,31 +154,37 @@ public class VgVectorInyection {
     }
 
     public Document leaveRequestToDoc(PendingLeaveRequestRagDto l) {
-        String leaveId = l.employeeName() + ":" + l.startDate();
-        Map<String,Object> metadata = Map.of(
-                "source", "smarthr",
-                "status", l.status(),
-                "type", "LEAVE_REQUEST",
-                "entityId", "leave:" + leaveId,
-                "leaveType", l.type()
-        );
-        String content = """
-                Solicitud de ausencia.
 
-                Empleado: %s.
-                Estado de la solicitud: %s.
-                Tipo: %s.
-                Periodo: %s → %s.
-                Comentarios: %s.
-                """.formatted(
+        String id = "leave:" + l.employeeName().replace(" ", "-")
+                + ":" + l.startDate();
+
+        String content = """
+        Solicitud de ausencia.
+        Empleado: %s.
+        Estado de la solicitud: %s.
+        Tipo: %s.
+        Periodo: %s → %s.
+        Comentarios: %s.
+        """.formatted(
                 l.employeeName(),
                 l.status(),
                 l.type(),
                 l.startDate(),
                 l.endDate(),
-                l.comments() != null ? l.comments() : "Sin comentarios"
+                Optional.ofNullable(l.comments()).orElse("No especificado")
         );
-        return new Document(content, metadata);
+
+        return new Document(
+                id,
+                content,
+                Map.of(
+                        "type", "LEAVE_REQUEST",
+                        "source", "smarthr",
+                        "status", l.status(),
+                        "entityId", id,
+                        "leaveType", l.type()
+                )
+        );
     }
 
 

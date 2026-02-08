@@ -297,7 +297,7 @@ CREATE EXTENSION IF NOT EXISTS hstore;
 
 -- Tabla vector_store compatible con IDs deterministas
 CREATE TABLE IF NOT EXISTS vector_store (
-                                            id TEXT PRIMARY KEY,                     -- ⬅️ ID DE NEGOCIO (employee:1, project:PRJ001, etc.)
+                                            id TEXT PRIMARY KEY,                     -- ID DE NEGOCIO (employee:1, project:PRJ001, etc.)
                                             content TEXT NOT NULL,                   -- texto embebido
                                             metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
                                             embedding VECTOR(1024)                   -- dimensión correcta para Ollama
