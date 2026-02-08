@@ -22,6 +22,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers("/api/**").hasAnyAuthority("ROLE_EMPLOYEE", "ROLE_RRHH")
+                        .requestMatchers("/internal/rag/**").permitAll()
 
                         .anyRequest().authenticated()
                 )

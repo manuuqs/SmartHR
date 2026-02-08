@@ -12,18 +12,19 @@ import com.smarthr.backend.web.exceptions.ResourceNotFoundException;
 import com.smarthr.backend.web.dto.EmployeeDto;
 import com.smarthr.backend.web.mapper.EmployeeSkillMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Servicio de negocio para Employee.
@@ -33,6 +34,7 @@ import java.util.Map;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class EmployeeService {
 
     private final EmployeeRepository repository;
@@ -44,6 +46,7 @@ public class EmployeeService {
 
     private final ContractService contractService;
     private final CompensationService compensationService;
+    private final EmployeeRagDtoService employeeRagDtoService;
 
     private final AssignmentRepository assignmentRepository;
     private final AssignmentMapper assignmentMapper;
@@ -188,7 +191,7 @@ public class EmployeeService {
         // 1. Crear Employee
         Employee employee = new Employee();
         employee.setName(dto.getName());
-        employee.setLocation(dto.getLocation());
+        employee.setLocation(dto.getLocation().toLowerCase());
         employee.setEmail(dto.getEmail());
         employee.setHireDate(dto.getHireDate());
 
@@ -264,6 +267,28 @@ public class EmployeeService {
             }
         }
 
+        log.info(" LLAMADA HTTP AL ASSISTANT ");
+        EmployeeCompleteDto ragEmployee = employeeRagDtoService.buildEmployeeRag(employee.getId());
+        // --- LLAMADA HTTP AL ASSISTANT ---
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String assistantUrl = "http://assistant:9090/internal/rag/upsert-employee";
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    assistantUrl,
+                    ragEmployee,
+                    String.class
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                log.warn("No se pudo insertar el empleado en RAG. Respuesta: {}", response.getBody());
+            }
+
+        } catch (Exception e) {
+            log.warn("Error llamando a assistant para insertar empleado en RAG: {}", e.getMessage());
+        }
+
+
         return employee;
     }
 
@@ -276,6 +301,15 @@ public class EmployeeService {
         return employees.stream()
                 .map(this::buildEmployeeCompleteDto)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public EmployeeCompleteDto getEmployeeCompleteRag(Long id) {
+
+        Optional<Employee> employee = repository.findById(id);
+
+        return employee.map(this::buildEmployeeCompleteDto)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
     }
 
     private EmployeeCompleteDto buildEmployeeCompleteDto(Employee employee) {

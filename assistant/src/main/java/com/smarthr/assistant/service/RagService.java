@@ -86,6 +86,11 @@ public class RagService {
         return docs;
     }
 
+    public List<Document> buildEmployee(EmployeeCompleteDto employee) {
+        List<Document> docs = new ArrayList<>();
+        docs.add(vgVectorInyection.employeeToDoc(employee)); // Solo el empleado
+        return docs;
+    }
     public String chatWithRag(String message) {
 
         RagIntent intent = detectIntent(message);
