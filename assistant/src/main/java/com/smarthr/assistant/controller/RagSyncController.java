@@ -1,12 +1,14 @@
 package com.smarthr.assistant.controller;
 
 import com.smarthr.assistant.dto.EmployeeCompleteDto;
+import com.smarthr.assistant.dto.LeaveRequestRagDto;
 import com.smarthr.assistant.service.RagService;
 import com.smarthr.assistant.utils.VgVectorInyection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +32,9 @@ public class RagSyncController {
     @Autowired
     private VectorStore vectorStore;
 
+    @Autowired
+    private PgVectorStore pgvectorStore;
+
 
     @PostMapping("/upsert-employee")
     public ResponseEntity<String> upsertEmployee(@RequestBody EmployeeCompleteDto employeeDto) {
@@ -43,5 +48,14 @@ public class RagSyncController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error insertando empleado en RAG: " + e.getMessage());
         }
+    }
+
+    @PostMapping("/upsert-leave-request")
+    public ResponseEntity<Void> upsertLeaveRequest(
+            @RequestBody LeaveRequestRagDto dto
+    ) {
+        log.info(" upsertLeaveRequest {}", dto);
+        vgVectorInyection.upsertLeaveRequest(dto, pgvectorStore);
+        return ResponseEntity.ok().build();
     }
 }

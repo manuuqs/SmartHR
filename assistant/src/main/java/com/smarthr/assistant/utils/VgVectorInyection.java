@@ -1,29 +1,30 @@
 package com.smarthr.assistant.utils;
 
 import com.smarthr.assistant.dto.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 
+import java.text.Normalizer;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class VgVectorInyection {
 
     public void upsertDocuments(List<Document> documents, VectorStore vectorStore) {
         for (Document doc : documents) {
             try {
-                String entityId = (String) doc.getMetadata().get("entityId");
-                if (entityId != null) {
-                    vectorStore.delete(List.of(entityId));
-                }
+                vectorStore.delete(List.of(doc.getId()));
             } catch (Exception ignored) {
             }
             vectorStore.add(List.of(doc));
         }
     }
+
 
     public Document employeeToDoc(EmployeeCompleteDto emp) {
 
@@ -153,9 +154,9 @@ public class VgVectorInyection {
         return new Document(content, metadata);
     }
 
-    public Document leaveRequestToDoc(PendingLeaveRequestRagDto l) {
+    public Document leaveRequestToDoc(PendingLeaveRequestRagDto l ) {
 
-        String id = "leave:" + l.employeeName().replace(" ", "-")
+        String id = "leave:" + l.employeeName().toLowerCase().replace(" ", "-")
                 + ":" + l.startDate();
 
         String content = """
@@ -185,6 +186,65 @@ public class VgVectorInyection {
                         "leaveType", l.type()
                 )
         );
+    }
+
+    public void upsertLeaveRequest(LeaveRequestRagDto dto, VectorStore vectorStore) {
+
+        // 1️⃣ Creamos un entityId "legible" y único
+        String entityId = "leave:" + Normalizer.normalize(dto.employeeName(), Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replace(" ", "-")
+                .toLowerCase()
+                + ":" + dto.startDate();
+
+        // 2️⃣ Contenido y metadata del documento
+        String content = """
+            Solicitud de ausencia.
+            Empleado: %s
+            Estado de la solicitud: %s
+            Tipo: %s
+            Periodo: %s → %s
+            Comentarios: %s
+            """.formatted(
+                dto.employeeName(),
+                dto.status(),
+                dto.type(),
+                dto.startDate(),
+                dto.endDate(),
+                dto.comments() != null ? dto.comments() : "-"
+        );
+
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("type", "LEAVE_REQUEST");
+        metadata.put("source", "smarthr");
+        metadata.put("status", dto.status());
+        metadata.put("leaveType", dto.type());
+        metadata.put("entityId", entityId);
+
+        // 3️⃣ Crear documento con ID determinístico que PgVector pueda aceptar
+        Document document = new Document(entityId, content, metadata);
+
+        // 4️⃣ Borrar el documento existente si ya estaba
+        try {
+            vectorStore.delete(List.of(entityId)); // <-- usar entityId directamente
+        } catch (Exception ignored) {
+            // si no existía, ignoramos
+        }
+
+        // 5️⃣ Insertar/actualizar documento
+        vectorStore.add(List.of(document));
+
+        log.info("✅ LeaveRequest upserted en VectorStore con id {}", entityId);
+    }
+
+
+    private String buildEntityId(LeaveRequestRagDto dto) {
+        String normalizedName = Normalizer.normalize(dto.employeeName(), Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replace(" ", "-")
+                .toLowerCase();
+
+        return "leave:" + normalizedName + ":" + dto.startDate();
     }
 
 

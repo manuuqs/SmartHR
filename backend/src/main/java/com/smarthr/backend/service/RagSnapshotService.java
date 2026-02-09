@@ -97,36 +97,6 @@ public class RagSnapshotService {
         return new CompanyRagSnapshotDto(employees, projects, departments, skills, pending);
     }
 
-    public EmployeeCompleteDto getRagNewEmployee(Long employeeId) {
-        EmployeeCompleteDto emp = employeeService.getEmployeeCompleteRag(employeeId);
-
-        List<ProjectRagDto> employeeProjects = assignmentRepository.findByEmployeeId(emp.id())
-                .stream()
-                .map(a -> toProjectRag(a.getProject())) // convierte Project -> ProjectRagDto
-                .distinct()
-                .toList();
-
-        return new EmployeeCompleteDto(
-                emp.id(),
-                emp.name(),
-                emp.email(),
-                emp.location(),
-                emp.hireDate(),
-                emp.department(),
-                emp.jobPosition(),
-                emp.skills(),
-                employeeProjects,
-                emp.contractType(),
-                emp.weeklyHours(),
-                emp.contractStartDate(),
-                emp.contractEndDate(),
-                emp.baseSalary(),
-                emp.bonus(),
-                emp.leaveRequests()
-        );
-    }
-
-
     private ProjectRagDto toProjectRag(Project p) {
         return new ProjectRagDto(
                 p.getCode(),

@@ -2,14 +2,17 @@ package com.smarthr.backend.service;
 
 
 import com.smarthr.backend.domain.LeaveRequest;
+import com.smarthr.backend.web.dto.LeaveRequestRagDto;
 import com.smarthr.backend.web.mapper.LeaveRequestMapper;
 import com.smarthr.backend.repository.EmployeeRepository;
 import com.smarthr.backend.repository.LeaveRequestRepository;
 import com.smarthr.backend.web.exceptions.ResourceNotFoundException;
 import com.smarthr.backend.web.dto.LeaveRequestDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,11 +20,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class LeaveRequestService {
 
     private final LeaveRequestRepository repo;
     private final EmployeeRepository employeeRepo;
     private final LeaveRequestMapper mapper;
+    private final LeaveRequestRagDtoService responseRagDtoService;
 
     public LeaveRequestDto create(LeaveRequestDto dto) {
         var emp = employeeRepo.findById(dto.getEmployeeId()).orElseThrow(() -> new ResourceNotFoundException("Empleado no existe"));
@@ -47,6 +52,26 @@ public class LeaveRequestService {
         leaveRequest.setStatus(newStatus);
 
         LeaveRequest saved = repo.save(leaveRequest);
+
+
+        try {
+            log.info("Actualizando LeaveRequest en RAG: {}, new status {}", leaveRequest, status);
+
+            LeaveRequestRagDto ragDto =
+                    responseRagDtoService.buildLeaveRequestRag(saved.getId());
+
+            log.info("LeaveRequestRagDto: {}", ragDto);
+
+            RestTemplate restTemplate = new RestTemplate();
+            restTemplate.postForEntity(
+                    "http://assistant:9090/internal/rag/upsert-leave-request",
+                    ragDto,
+                    Void.class
+            );
+
+        } catch (Exception e) {
+            log.warn("⚠️ No se pudo actualizar LeaveRequest en RAG: {}", e.getMessage());
+        }
         return mapper.toDto(saved);
     }
 
