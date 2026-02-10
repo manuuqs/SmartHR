@@ -190,14 +190,12 @@ public class VgVectorInyection {
 
     public void upsertLeaveRequest(LeaveRequestRagDto dto, VectorStore vectorStore) {
 
-        // 1️⃣ Creamos un entityId "legible" y único
         String entityId = "leave:" + Normalizer.normalize(dto.employeeName(), Normalizer.Form.NFD)
                 .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
                 .replace(" ", "-")
                 .toLowerCase()
                 + ":" + dto.startDate();
 
-        // 2️⃣ Contenido y metadata del documento
         String content = """
             Solicitud de ausencia.
             Empleado: %s
@@ -221,31 +219,54 @@ public class VgVectorInyection {
         metadata.put("leaveType", dto.type());
         metadata.put("entityId", entityId);
 
-        // 3️⃣ Crear documento con ID determinístico que PgVector pueda aceptar
         Document document = new Document(entityId, content, metadata);
 
-        // 4️⃣ Borrar el documento existente si ya estaba
         try {
             vectorStore.delete(List.of(entityId)); // <-- usar entityId directamente
         } catch (Exception ignored) {
-            // si no existía, ignoramos
         }
 
-        // 5️⃣ Insertar/actualizar documento
         vectorStore.add(List.of(document));
 
-        log.info("✅ LeaveRequest upserted en VectorStore con id {}", entityId);
     }
 
+    public void insertLeaveRequest(LeaveRequestRagDto dto, VectorStore vectorStore) {
 
-    private String buildEntityId(LeaveRequestRagDto dto) {
-        String normalizedName = Normalizer.normalize(dto.employeeName(), Normalizer.Form.NFD)
+        String entityId = "leave:" + Normalizer.normalize(dto.employeeName(), Normalizer.Form.NFD)
                 .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
                 .replace(" ", "-")
-                .toLowerCase();
+                .toLowerCase()
+                + ":" + dto.startDate();
 
-        return "leave:" + normalizedName + ":" + dto.startDate();
+        String content = """
+            Solicitud de ausencia.
+            Empleado: %s
+            Estado de la solicitud: %s
+            Tipo: %s
+            Periodo: %s → %s
+            Comentarios: %s
+            """.formatted(
+                dto.employeeName(),
+                dto.status(),
+                dto.type(),
+                dto.startDate(),
+                dto.endDate(),
+                dto.comments() != null ? dto.comments() : "-"
+        );
+
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("type", "LEAVE_REQUEST");
+        metadata.put("source", "smarthr");
+        metadata.put("status", dto.status());
+        metadata.put("leaveType", dto.type());
+        metadata.put("entityId", entityId);
+
+        Document document = new Document(entityId, content, metadata);
+
+        vectorStore.add(List.of(document));
+
     }
+
 
 
 }

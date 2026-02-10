@@ -1,10 +1,7 @@
 package com.smarthr.backend.service;
 
 import com.smarthr.backend.domain.Project;
-import com.smarthr.backend.repository.AssignmentRepository;
-import com.smarthr.backend.repository.DepartmentRepository;
-import com.smarthr.backend.repository.ProjectRepository;
-import com.smarthr.backend.repository.SkillRepository;
+import com.smarthr.backend.repository.*;
 import com.smarthr.backend.web.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +16,7 @@ public class RagSnapshotService {
 
     private final ProjectRepository projectRepository;
     private final DepartmentRepository departmentRepository;
-    private final LeaveRequestService leaveRequestService;
+    private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeService employeeService;
     private final SkillRepository skillRepository;
     private final AssignmentRepository assignmentRepository;
@@ -73,12 +70,12 @@ public class RagSnapshotService {
                 .map(d -> new DepartmentRagDto(d.getName(), d.getDescription()))
                 .toList();
 
-        List<PendingLeaveRequestRagDto> pending = leaveRequestService.getPendingRequests()
+        List<PendingLeaveRequestRagDto> pending = leaveRequestRepository.findAll()
                 .stream()
                 .map(lr -> new PendingLeaveRequestRagDto(
-                        lr.getEmployeeName(),
-                        lr.getStatus(),
-                        lr.getType(),
+                        lr.getEmployee().getName().toLowerCase(),
+                        lr.getStatus().toString(),
+                        lr.getType().toString(),
                         lr.getStartDate(),
                         lr.getEndDate(),
                         lr.getComments()

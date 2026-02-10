@@ -34,7 +34,27 @@ public class LeaveRequestService {
         lr.setEmployee(emp);
         if (lr.getEndDate().isBefore(lr.getStartDate())) throw new IllegalArgumentException("Fecha fin no puede ser anterior a inicio");
         LeaveRequest saved = repo.save(lr);
+
+        try {
+            log.info("Actualizando LeaveRequest en RAG: {}", dto);
+
+            LeaveRequestRagDto ragDto =
+                    responseRagDtoService.buildLeaveRequestRag(saved.getId());
+
+            log.info("LeaveRequestRagDto: {}", ragDto);
+
+            RestTemplate restTemplate = new RestTemplate();
+            restTemplate.postForEntity(
+                    "http://assistant:9090/internal/rag/insert-leave-request",
+                    ragDto,
+                    Void.class
+            );
+
+        } catch (Exception e) {
+            log.warn("⚠️ No se pudo actualizar LeaveRequest en RAG: {}", e.getMessage());
+        }
         return mapper.toDto(saved);
+
     }
 
     public LeaveRequestDto changeStatus(Long id, String status) {

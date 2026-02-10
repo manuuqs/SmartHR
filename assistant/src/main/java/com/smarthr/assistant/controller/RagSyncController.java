@@ -38,7 +38,7 @@ public class RagSyncController {
 
     @PostMapping("/upsert-employee")
     public ResponseEntity<String> upsertEmployee(@RequestBody EmployeeCompleteDto employeeDto) {
-        log.info(" upsertEmployee {}", employeeDto);
+        log.info("upsertEmployee {}", employeeDto);
         try {
             // Convertir el DTO a documentos y guardarlos
             List<Document> documents = ragService.buildEmployee(employeeDto);
@@ -54,8 +54,19 @@ public class RagSyncController {
     public ResponseEntity<Void> upsertLeaveRequest(
             @RequestBody LeaveRequestRagDto dto
     ) {
-        log.info(" upsertLeaveRequest {}", dto);
+        log.info("upsertLeaveRequest {}", dto);
         vgVectorInyection.upsertLeaveRequest(dto, pgvectorStore);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/insert-leave-request")
+    public ResponseEntity<Void> insertLeaveRequest(
+            @RequestBody LeaveRequestRagDto dto
+    ) {
+        log.info("insertLeaveRequest {}", dto);
+        vgVectorInyection.insertLeaveRequest(dto, pgvectorStore);
+        return ResponseEntity.ok().build();
+    }
+
+
 }

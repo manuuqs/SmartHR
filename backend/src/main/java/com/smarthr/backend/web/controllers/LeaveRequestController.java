@@ -32,6 +32,7 @@ public class LeaveRequestController {
     @Operation(summary = "Crea solicitud de ausencia")
     @PostMapping
     public ResponseEntity<LeaveRequestDto> create(@Valid @RequestBody LeaveRequestDto dto) {
+        System.out.println("create: " + dto);
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
