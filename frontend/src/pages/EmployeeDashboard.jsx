@@ -5,7 +5,7 @@ import ThemeSwitch from "../components/ThemeSwitch.jsx";
 import "../styles/EmployeeDashboard.css";
 import Loader from "../components/Loader";
 import AIChat from "../components/AIChat";
-
+import LeaveRequestForm from "../components/LeaveRequestForm";
 import dockerIcon from "../assets/dockerIcon.png";
 import javaIcon from "../assets/javaIcon.png";
 import kubernetesIcon from "../assets/kubernetesIcon.png";
@@ -14,11 +14,11 @@ import reactIcon from "../assets/reactIcon.png";
 import springIcon from "../assets/springIcon.png";
 import sqlIcon from "../assets/sqlIcon.png";
 
-
 export default function EmployeeDashboard() {
     const [employeeData, setEmployeeData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState("profile");
+    const [showLeaveForm, setShowLeaveForm] = useState(false);
 
     const token = localStorage.getItem("token");
     const url = `${import.meta.env.VITE_API_BASE_URL}/api/employees/me/full`;
@@ -42,11 +42,7 @@ export default function EmployeeDashboard() {
 
         setLoading(true);
 
-        fetch(url, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
+        fetch(url, { headers: { Authorization: `Bearer ${token}` } })
             .then((res) => {
                 if (!res.ok) throw new Error("Error al cargar datos");
                 return res.json();
@@ -105,29 +101,37 @@ export default function EmployeeDashboard() {
                 />
             </div>
 
-                {/* Menú lateral */}
-                <div className="input">
-                    {["profile", "skills", "projects", "contract", "salary", "reviews", "leaves"].map((sec) => {
-                        const labels = {
-                            profile: "👤 Perfil",
-                            skills: "🛠 Skills",
-                            projects: "📁 Proyectos",
-                            contract: "💼 Contrato",
-                            salary: "💰 Compensación",
-                            reviews: "⭐ Evaluaciones de desempeño",
-                            leaves: "🏖 Solicitudes de ausencia",
-                        };
-                        return (
-                            <button
-                                key={sec}
-                                className={`value ${section === sec ? "active" : ""}`}
-                                onClick={() => setSection(sec)}
-                            >
-                                {labels[sec]}
-                            </button>
-                        );
-                    })}
-                </div>
+            {/* Menú lateral */}
+            <div className="input">
+                {[
+                    "profile",
+                    "skills",
+                    "projects",
+                    "contract",
+                    "salary",
+                    "reviews",
+                    "leaves",
+                ].map((sec) => {
+                    const labels = {
+                        profile: "👤 Perfil",
+                        skills: "🛠 Skills",
+                        projects: "📁 Proyectos",
+                        contract: "💼 Contrato",
+                        salary: "💰 Compensación",
+                        reviews: "⭐ Evaluaciones de desempeño",
+                        leaves: "🏖 Solicitudes de ausencia",
+                    };
+                    return (
+                        <button
+                            key={sec}
+                            className={`value ${section === sec ? "active" : ""}`}
+                            onClick={() => setSection(sec)}
+                        >
+                            {labels[sec]}
+                        </button>
+                    );
+                })}
+            </div>
 
             {/* Contenido principal */}
             <div className="dashboard-layout">
@@ -143,16 +147,14 @@ export default function EmployeeDashboard() {
                             </div>
                         </InfoCard>
                     )}
+
                     {section === "skills" && (
                         <InfoCard title="🛠 Skills">
                             {employeeData.skills.map((s) => (
                                 <div key={s.id} className="skill-row">
                                     <span className="skill-name">{s.skillName}</span>
-
                                     <progress max="5" value={s.level} />
-
                                     <span className="skill-level">{s.level}/5</span>
-
                                     {skillIconMap[s.skillName] && (
                                         <img
                                             src={skillIconMap[s.skillName]}
@@ -164,6 +166,7 @@ export default function EmployeeDashboard() {
                             ))}
                         </InfoCard>
                     )}
+
                     {section === "projects" && (
                         <InfoCard title="📁 Proyectos">
                             {employeeData.assignments.map((a) => (
@@ -192,6 +195,7 @@ export default function EmployeeDashboard() {
                             ))}
                         </InfoCard>
                     )}
+
                     {section === "salary" && (
                         <InfoCard title="💰 Compensación">
                             {employeeData.compensations.map((c) => (
@@ -208,6 +212,7 @@ export default function EmployeeDashboard() {
                             ))}
                         </InfoCard>
                     )}
+
                     {section === "reviews" && (
                         <InfoCard title="⭐ Evaluaciones de desempeño">
                             {employeeData.reviews.length === 0 ? (
@@ -223,35 +228,63 @@ export default function EmployeeDashboard() {
                             )}
                         </InfoCard>
                     )}
-                    {section === "leaves" && (
-                        <InfoCard title="🏖 Solicitudes de ausencia">
-                            {employeeData.leaveRequests.length === 0 ? (
-                                <p>No hay solicitudes registradas</p>
-                            ) : (
-                                employeeData.leaveRequests.map((l) => {
-                                    const statusEmoji =
-                                        l.status === "APPROVED"
-                                            ? "🟢"
-                                            : l.status === "PENDING"
-                                                ? "🟡"
-                                                : "🔴";
 
-                                    return (
-                                        <div key={l.id} className="list-card">
-                                            <strong>
-                                                {statusEmoji} {l.type}
-                                            </strong>
-                                            <p>
-                                                {l.startDate} → {l.endDate}
-                                            </p>
-                                            <p>Estado: {l.status}</p>
-                                            {l.comments && <p>{l.comments}</p>}
-                                        </div>
-                                    );
-                                })
+                    {section === "leaves" && (
+                        <>
+                            <InfoCard title="🏖 Solicitudes de ausencia">
+                                <div className="leave-header">
+                                    <button
+                                        className="new-request-btn"
+                                        onClick={() => setShowLeaveForm(true)}
+                                    >
+                                        ➕ Nueva solicitud
+                                    </button>
+                                </div>
+
+                                {employeeData.leaveRequests.length === 0 ? (
+                                    <p>No hay solicitudes registradas</p>
+                                ) : (
+                                    employeeData.leaveRequests.map((l) => {
+                                        const statusEmoji =
+                                            l.status === "APPROVED"
+                                                ? "🟢"
+                                                : l.status === "PENDING"
+                                                    ? "🟡"
+                                                    : "🔴";
+
+                                        return (
+                                            <div key={l.id} className="list-card">
+                                                <strong>{statusEmoji} {l.type}</strong>
+                                                <p><strong>Inicio:</strong> {l.startDate}</p>
+                                                <p><strong>Fin:</strong> {l.endDate}</p>
+                                                <p>Estado: {l.status}</p>
+                                                {l.comments && <p>{l.comments}</p>}
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </InfoCard>
+
+                            {/* Formulario modal */}
+                            {showLeaveForm && (
+                                <LeaveRequestForm
+                                    employee={{
+                                        id: employeeData.employee.id,
+                                        name: employeeData.employee.name,
+                                    }}
+                                    onClose={() => setShowLeaveForm(false)}
+                                    onCreated={(newRequest) =>
+                                        setEmployeeData((prev) => ({
+                                            ...prev,
+                                            leaveRequests: [...prev.leaveRequests, newRequest],
+                                        }))
+                                    }
+                                />
                             )}
-                        </InfoCard>
+                        </>
                     )}
+
+
                 </div>
             </div>
             <AIChat employeeName={employeeData.employee.name} />

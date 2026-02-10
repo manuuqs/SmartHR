@@ -120,6 +120,21 @@
             1px 1px 10px rgba(255,255,255,0.6);
 }
 
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+
+
 /* Responsive: estructura 100% igual, solo padding */
 @media (max-width: 768px) {
     .employee-card-wrapper {

@@ -82,14 +82,10 @@ public class LeaveRequestService {
     }
 
     public List<LeaveRequestDto> getPendingRequests() {
-        List<LeaveRequest> pending = repo.findAll();
+        List<LeaveRequest> pending = repo.findByStatus(LeaveRequest.LeaveStatus.PENDING);
         return pending.stream()
-                .map(mapper::toDto) // Usamos el mapper que ya tienes
+                .map(mapper::toDto)
                 .collect(Collectors.toList());
-    }
-
-    public List<LeaveRequestDto> listRecentByEmployee(Long employeeId, int limit) {
-        return listByEmployee(employeeId).stream().limit(limit).toList();
     }
 
 

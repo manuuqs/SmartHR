@@ -26,6 +26,82 @@
     display: block;
 }
 
+.leave-header {
+    display: flex;
+    justify-content: flex-end; /* título a la izquierda, botón a la derecha */
+    margin-bottom: 16px;
+    gap: 16px; /* espacio entre elementos si el contenedor se hace más pequeño */
+}
+
+.leave-header span {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.new-employee-btn {
+    padding: 6px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* Hover opcional para el botón */
+.new-employee-btn:hover {
+    background-color: #2f81f7;
+    color: #fff;
+}
+
+.new-request-btn {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--shadow-dark);
+    border-radius: 10px;
+
+    padding: 6px 16px;
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    /* 🔥 clave: sombra controlada */
+    box-shadow:
+            2px 2px 6px var(--shadow-dark),
+            -2px -2px 6px var(--shadow-light);
+
+    transition:
+            background-color 0.2s ease,
+            box-shadow 0.2s ease,
+            transform 0.1s ease;
+}
+
+.new-request-btn:hover {
+    background-color: #2f81f7;
+    color: #fff;
+
+    box-shadow:
+            inset 2px 2px 4px rgba(0, 0, 0, 0.25),
+            inset -2px -2px 4px rgba(255, 255, 255, 0.15);
+}
+
+.new-request-btn:focus,
+.new-request-btn:focus-visible {
+    outline: none; /* 🔴 elimina el aro raro */
+    box-shadow:
+            0 0 0 2px #2f81f7,
+            2px 2px 6px var(--shadow-dark),
+            -2px -2px 6px var(--shadow-light);
+}
+
+.new-request-btn:active {
+    transform: translateY(1px);
+    box-shadow:
+            inset 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+
+
+
 /* ------------------ InfoCard ------------------ */
 .info-card {
     height: 100%;              /* llena el contenedor */

@@ -33,13 +33,9 @@ public class LeaveRequestController {
     @PostMapping
     public ResponseEntity<LeaveRequestDto> create(@Valid @RequestBody LeaveRequestDto dto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
+        userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Si no es RRHH y el ID no coincide con su empleado, denegar
-        if (!user.getRoles().contains("ROLE_RRHH")) {
-            throw new AccessDeniedException("No tienes permiso para ver otros empleados");
-        }
         LeaveRequestDto created = service.create(dto);
         return ResponseEntity.created(URI.create("/api/leave-requests/" + created.getId())).body(created);
     }
