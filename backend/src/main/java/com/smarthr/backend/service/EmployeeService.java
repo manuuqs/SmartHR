@@ -60,6 +60,9 @@ public class EmployeeService {
     private final ContractRepository contractRepository;
     private final ProjectRepository projectRepository;
     private final SkillRepository skillRepository;
+    private final CompensationRepository compensationRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
+    private final PerformanceReviewRepository performanceReviewRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -290,6 +293,40 @@ public class EmployeeService {
 
 
         return employee;
+    }
+
+    @Transactional
+    public void deleteCompleteEmployee(Long employeeId) {
+
+
+        // 1. USER (muy importante que vaya primero)
+        userRepository.deleteByEmployeeId(employeeId);
+
+        // 2. ASSIGNMENTS
+        assignmentRepository.deleteByEmployeeId(employeeId);
+
+        // 3. EMPLOYEE SKILLS
+        employeeSkillRepository.deleteByEmployeeId(employeeId);
+
+        // 4. CONTRACTS
+        contractRepository.deleteByEmployeeId(employeeId);
+
+        // 5. COMPENSATIONS
+        compensationRepository.deleteByEmployeeId(employeeId);
+
+        // 6. LEAVE REQUESTS
+        leaveRequestRepository.deleteByEmployeeId(employeeId);
+
+        // 7. PERFORMANCE REVIEWS
+        performanceReviewRepository.deleteByEmployeeId(employeeId);
+
+        // 8. EMPLOYEE
+        repository.deleteById(employeeId);
+
+
+
+        log.info("Empleado eliminado correctamente");
+
     }
 
 

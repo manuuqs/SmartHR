@@ -155,7 +155,8 @@ public class EmployeeController {
         if (!user.getRoles().contains("ROLE_RRHH")) {
             throw new AccessDeniedException("No tienes permiso para ver otros empleados");
         }
-        service.delete(id);
+
+        service.deleteCompleteEmployee(id);
         return ResponseEntity.noContent().build();
     }
 
