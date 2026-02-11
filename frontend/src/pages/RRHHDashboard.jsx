@@ -286,8 +286,15 @@ export default function RRHHDashboard() {
             <main className="rrhh-main-content">
                 {/* Perfil de empleado */}
                 {employeeData && (
-                    <DashboardSections employeeData={employeeData} section={section} />
+                    <DashboardSections
+                        employeeData={employeeData}
+                        section={section}
+                        token={token}
+                        baseUrl={baseUrl}
+                        onEmployeeDeleted={() => setEmployeeData(null)}
+                    />
                 )}
+
 
                 {/* Resultados de proyectos */}
                 {!employeeData && projectResults && (
@@ -410,7 +417,43 @@ export default function RRHHDashboard() {
 /* ======================================================
    Secciones del empleado
 ====================================================== */
-function DashboardSections({ employeeData, section }) {
+function DashboardSections({ employeeData, section, token, baseUrl, onEmployeeDeleted }) {
+
+    const handleDeleteEmployee = async () => {
+        const employeeId = employeeData.employee.id;
+
+        const confirmDelete = window.confirm(
+            "¿Estás seguro de que quieres dar de baja a este empleado?"
+        );
+
+        if (!confirmDelete) return;
+
+        try {
+            const res = await fetch(
+                `${baseUrl}/api/employees/${employeeId}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (!res.ok) {
+                throw new Error("Error al eliminar el empleado");
+            }
+
+            alert("Empleado dado de baja correctamente");
+
+            // Limpia vista
+            onEmployeeDeleted();
+
+        } catch (err) {
+            console.error(err);
+            alert("No se pudo eliminar el empleado");
+        }
+    };
+
     return (
         <div className="dashboard-layout">
             <div className="dashboard-content">
@@ -424,8 +467,25 @@ function DashboardSections({ employeeData, section }) {
                             <input value={employeeData.employee.departmentName} readOnly />
                             <input value={employeeData.employee.jobPositionTitle} readOnly />
                         </div>
+
+                        <button
+                            onClick={handleDeleteEmployee}
+                            style={{
+                                marginTop: "20px",
+                                backgroundColor: "#e53935",
+                                color: "white",
+                                border: "none",
+                                padding: "10px 18px",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontWeight: "bold"
+                            }}
+                        >
+                            🔴 Dar de baja empleado
+                        </button>
                     </InfoCard>
                 )}
+
 
                 {section === "skills" && (
                     <InfoCard title="🛠 Skills">

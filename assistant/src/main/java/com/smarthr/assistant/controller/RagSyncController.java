@@ -1,6 +1,7 @@
 package com.smarthr.assistant.controller;
 
 import com.smarthr.assistant.dto.EmployeeCompleteDto;
+import com.smarthr.assistant.dto.EmployeeRagDto;
 import com.smarthr.assistant.dto.LeaveRequestRagDto;
 import com.smarthr.assistant.service.RagService;
 import com.smarthr.assistant.utils.VgVectorInyection;
@@ -65,6 +66,15 @@ public class RagSyncController {
     ) {
         log.info("insertLeaveRequest {}", dto);
         vgVectorInyection.insertLeaveRequest(dto, pgvectorStore);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/delete-employee")
+    public ResponseEntity<Void> deleteEmployee(
+            @RequestBody EmployeeRagDto dto
+    ) {
+        log.info("delete employee {}", dto);
+        vgVectorInyection.deleteEmployee(dto, pgvectorStore);
         return ResponseEntity.ok().build();
     }
 

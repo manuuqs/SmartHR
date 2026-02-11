@@ -1,6 +1,7 @@
 package com.smarthr.assistant.utils;
 
 import com.smarthr.assistant.dto.*;
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -28,10 +29,13 @@ public class VgVectorInyection {
 
     public Document employeeToDoc(EmployeeCompleteDto emp) {
 
+        String id = "employee:" + emp.name().toLowerCase().replace(" ", "-")
+                + ":" + emp.email();
+
         Map<String,Object> metadata = new HashMap<>();
         metadata.put("source", "smarthr");
         metadata.put("type", "EMPLOYEE");
-        metadata.put("entityId", "employee:" + emp.id());
+        metadata.put("entityId", id);
         metadata.put("jobPosition", emp.jobPosition());
         metadata.put("location", emp.location());
         metadata.put("department", emp.department());
@@ -45,7 +49,12 @@ public class VgVectorInyection {
             metadata.put("projects", projects);
         }
 
-        return new Document(buildEmployeeText(emp, projects), metadata);
+        return new Document(
+                id,
+                buildEmployeeText(emp, projects),
+                metadata
+        );
+
     }
 
     private String buildEmployeeText(EmployeeCompleteDto emp, List<ProjectRagDto> projects) {
@@ -264,6 +273,27 @@ public class VgVectorInyection {
         Document document = new Document(entityId, content, metadata);
 
         vectorStore.add(List.of(document));
+
+    }
+
+    public void deleteEmployee(EmployeeRagDto dto, VectorStore vectorStore) {
+
+        String entityId = "employee:" + Normalizer.normalize(dto.name(), Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replace(" ", "-")
+                .toLowerCase()
+                + ":" + dto.email();
+
+//        String entityId = "employee:" + dto.id();
+
+        log.info("entityId {}", entityId);
+
+        try {
+
+            vectorStore.delete(List.of(entityId));
+        } catch (Exception ignored) {
+        }
+
 
     }
 

@@ -3,13 +3,10 @@ package com.smarthr.backend.service;
 
 import com.smarthr.backend.domain.*;
 import com.smarthr.backend.repository.*;
-import com.smarthr.backend.web.dto.EmployeeCompleteDto;
-import com.smarthr.backend.web.dto.NewEmployeeCompleteDto;
-import com.smarthr.backend.web.dto.ProjectRagDto;
+import com.smarthr.backend.web.dto.*;
 import com.smarthr.backend.web.mapper.AssignmentMapper;
 import com.smarthr.backend.web.mapper.EmployeeMapper;
 import com.smarthr.backend.web.exceptions.ResourceNotFoundException;
-import com.smarthr.backend.web.dto.EmployeeDto;
 import com.smarthr.backend.web.mapper.EmployeeSkillMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -298,6 +295,8 @@ public class EmployeeService {
     @Transactional
     public void deleteCompleteEmployee(Long employeeId) {
 
+        Employee employee = repository.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + employeeId));
 
         // 1. USER (muy importante que vaya primero)
         userRepository.deleteByEmployeeId(employeeId);
@@ -323,7 +322,31 @@ public class EmployeeService {
         // 8. EMPLOYEE
         repository.deleteById(employeeId);
 
+        try {
+            EmployeeRagDto dto = new EmployeeRagDto(
+                    employee.getId(),
+                    employee.getName(),
+                    employee.getLocation(),
+                    employee.getEmail(),
+                    employee.getHireDate(),
+                    employee.getDepartment() != null ? employee.getDepartment().getId() : null,
+                    employee.getDepartment() != null ? employee.getDepartment().getName() : null,
+                    employee.getJobPosition() != null ? employee.getJobPosition().getId() : null,
+                    employee.getJobPosition() != null ? employee.getJobPosition().getTitle() : null
+            );
 
+            log.info("Borrando Employee en RAG: {}", employee.getName());
+
+            RestTemplate restTemplate = new RestTemplate();
+            restTemplate.postForEntity(
+                    "http://assistant:9090/internal/rag/delete-employee",
+                    dto,
+                    Void.class
+            );
+
+        } catch (Exception e) {
+            log.warn("⚠️ No se pudo eliminar el employee en RAG: {}", e.getMessage());
+        }
 
         log.info("Empleado eliminado correctamente");
 
