@@ -289,14 +289,30 @@ public class RagService {
     private RagIntent detectIntent(String message) {
         String lower = assistantChatUtils.normalize(message);
 
-        if (lower.contains("empleados") && lower.contains("proyecto")) return RagIntent.EMPLOYEE_BY_PROJECT;
-        if (lower.contains("empleado") || lower.contains("empleados") || lower.contains("trabaja")) return RagIntent.EMPLOYEE;
-        if (lower.contains("proyecto")) return RagIntent.PROJECT;
-        if (lower.contains("departamento")) return RagIntent.DEPARTMENT;
-        if (lower.contains("ausencia") || lower.contains("vacaciones") || lower.contains("permiso")) return RagIntent.LEAVE_REQUEST;
+        // 🔥 Caso especial: pregunta por proyectos de una persona
+        if (assistantChatUtils.extractEmployeeName(message) != null
+                && lower.contains("proyecto")) {
+            return RagIntent.EMPLOYEE;
+        }
+
+        if (lower.contains("empleados") && lower.contains("proyecto"))
+            return RagIntent.EMPLOYEE_BY_PROJECT;
+
+        if (lower.contains("empleado") || lower.contains("empleados") || lower.contains("trabaja"))
+            return RagIntent.EMPLOYEE;
+
+        if (lower.contains("proyecto"))
+            return RagIntent.PROJECT;
+
+        if (lower.contains("departamento"))
+            return RagIntent.DEPARTMENT;
+
+        if (lower.contains("ausencia") || lower.contains("vacaciones") || lower.contains("permiso"))
+            return RagIntent.LEAVE_REQUEST;
 
         return RagIntent.GENERIC;
     }
+
 
     private String handleProjects(String message, String enhancedQuery) {
 
