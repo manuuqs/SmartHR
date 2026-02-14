@@ -89,12 +89,13 @@ public class AssistantChatUtils {
     public String extractProjectCode(String message) {
         String n = normalize(message);
 
-        if (n.contains("PRJ001")) return "PRJ001";
-        if (n.contains("PRJ002")) return "PRJ002";
-        if (n.contains("PRJ003")) return "PRJ003";
-        if (n.contains("PRJ004")) return "PRJ004";
-        if (n.contains("PRJ005")) return "PRJ005";
-        if (n.contains("PRJ006")) return "PRJ006";
+        // Comparar en minúsculas ya que normalize() convierte a minúsculas
+        if (n.contains("prj001")) return "PRJ001";
+        if (n.contains("prj002")) return "PRJ002";
+        if (n.contains("prj003")) return "PRJ003";
+        if (n.contains("prj004")) return "PRJ004";
+        if (n.contains("prj005")) return "PRJ005";
+        if (n.contains("prj006")) return "PRJ006";
 
         return null;
     }

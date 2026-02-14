@@ -26,19 +26,20 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RagService {
 
+    @Autowired
     private final RestTemplate restTemplate;
 
     @Autowired
-    private ChatClient chatClient;
+    private final ChatClient chatClient;
 
     @Autowired
-    private VectorStore vectorStore;
+    private final VectorStore vectorStore;
 
     @Autowired
-    private VgVectorInyection vgVectorInyection;
+    private final VgVectorInyection vgVectorInyection;
 
     @Autowired
-    AssistantChatUtils assistantChatUtils;
+    public final AssistantChatUtils assistantChatUtils;
 
     //@EventListener(ApplicationReadyEvent.class)
     public void syncSmartHRData() {
@@ -215,7 +216,7 @@ public class RagService {
         return answerWithContext(message, employeeDocs);
     }
 
-    private String handleAbsenceQueryForEmployee(String employeeName, String message) {
+    public String handleAbsenceQueryForEmployee(String employeeName, String message) {
 
         String cleanName = assistantChatUtils.normalize(employeeName);
 
@@ -262,7 +263,7 @@ public class RagService {
 
     }
 
-    private String answerWithContext(String message, List<Document> docs) {
+    public String answerWithContext(String message, List<Document> docs) {
         String context = assistantChatUtils.buildContextWithMetadata(docs);
 
         return chatClient.prompt()
@@ -286,7 +287,7 @@ public class RagService {
         return vectorStore.similaritySearch(request);
     }
 
-    private RagIntent detectIntent(String message) {
+    public RagIntent detectIntent(String message) {
         String lower = assistantChatUtils.normalize(message);
 
         // 🔥 Caso especial: pregunta por proyectos de una persona
@@ -314,7 +315,7 @@ public class RagService {
     }
 
 
-    private String handleProjects(String message, String enhancedQuery) {
+    public String handleProjects(String message, String enhancedQuery) {
 
         String targetProject = assistantChatUtils.extractProjectNameFromMessage(message);
         String targetLocation = assistantChatUtils.extractProjectLocation(message);
@@ -413,7 +414,7 @@ public class RagService {
         return answerWithContext(message, matchedEmployees);
     }
 
-    private String handleEmployeesByProject(String message, String enhancedQuery) {
+    public String handleEmployeesByProject(String message, String enhancedQuery) {
 
         SearchRequest projectRequest = SearchRequest.builder()
                 .query(enhancedQuery)
